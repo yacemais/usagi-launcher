@@ -1,0 +1,6 @@
+{
+  "name":"usagi-social-service","version":"0.1.0","private":true,"type":"module",
+  "engines":{"node":">=24.21.0 <25"},
+  "scripts":{"start":"node dist/main.cjs"},
+  "dependencies":{"ws":"8.22.0"}
+}

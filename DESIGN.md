@@ -9,10 +9,16 @@ off-white and restrained green status dots. The Home pairs one clear modpack act
 with the owner's emblem. Body typography is Inter. No display serif, invented scenery,
 moon/orbit illustrations, decorative statistics or fabricated news/status.
 
-Navigation is Home, News, Updates and Settings. Account sits in the title bar.
+Navigation is Home, Social, News, Updates and Settings. Account sits in the title bar.
 Updates separates the game from the application. Use clear headings, generous space,
 readable 12–13px control text and visible keyboard focus. At 960×620, main content
 scrolls while navigation/title bar stay usable. Respect reduced motion.
+
+Startup reuses the transparent owner emblem/wordmark in a restrained 2.2 second CSS
+fade/scale transition over the application. Six small stars and a faint glow are
+the only added decoration. Reduced motion skips the animation and delay. There is
+no simulated loading progress. Social uses the same surfaces/type/buttons, a compact
+friends column and a readable conversation; all real statuses come from the service.
 
 Antislop mode: during implementation, as already selected by the owner. Both the
 configured project-relative and user-cache antislop core/UI files were checked again

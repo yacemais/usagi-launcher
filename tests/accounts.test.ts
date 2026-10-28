@@ -2,11 +2,11 @@ import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-const fixture=vi.hoisted(()=>({owned:true,accounts:[{homeAccountId:'fixture-account'}],silent:0,removed:0,deviceGate:undefined as Promise<void>|undefined}));
+const fixture=vi.hoisted(()=>({owned:true,accounts:[{homeAccountId:'fixture-account'}],silent:0,removed:0,deviceGate:undefined as Promise<void>|undefined,silentGate:undefined as Promise<void>|undefined}));
 vi.mock('@azure/msal-node',()=>({PublicClientApplication:class {
   getTokenCache(){return {serialize:()=>JSON.stringify({fixture:'mock-token'}),deserialize:()=>{},getAllAccounts:async()=>fixture.accounts,removeAccount:async()=>{fixture.removed++;fixture.accounts=[];}};}
   async acquireTokenByDeviceCode(){await fixture.deviceGate;return {accessToken:'fixture-microsoft-token',account:{homeAccountId:'fixture-account'}};}
-  async acquireTokenSilent(){fixture.silent++;return {accessToken:'fixture-refresh-token',account:{homeAccountId:'fixture-account'}};}
+  async acquireTokenSilent(){fixture.silent++;await fixture.silentGate;return {accessToken:'fixture-refresh-token',account:{homeAccountId:'fixture-account'}};}
 }}));
 vi.mock('@xmcl/user',()=>({MicrosoftAuthenticator:class {
   async authenticateXboxLive(){return {Token:'fixture-xbl-token'};}
@@ -25,6 +25,7 @@ const accounts=()=>new Accounts(root,protection,new Logger(path.join(root,'logs'
 beforeEach(async()=>{root=await fs.mkdtemp(path.join(os.tmpdir(),'Celestia account fixture '));fixture.owned=true;fixture.accounts=[{homeAccountId:'fixture-account'}];fixture.silent=0;fixture.removed=0;});
 afterEach(async()=>{await fs.rm(root,{recursive:true,force:true});});
 describe('account orchestration using explicit service mocks',()=>{
+  it('prevents logout and parallel refresh while Social is acquiring a Minecraft session',async()=>{const a=accounts();await a.configure('fixture-client-id');await a.login('device');let release:()=>void=()=>{};fixture.silentGate=new Promise<void>(resolve=>{release=resolve;});const session=a.session();await expect(a.logout('fixture-account')).rejects.toThrow(/operation/);await expect(a.session()).rejects.toThrow(/Finish/);release();await session;fixture.silentGate=undefined;expect(a.busy).toBe(false);await a.logout('fixture-account');expect(a.profiles).toEqual([]);});
   it('blocks a new sign-in while logout is durably removing the selected account',async()=>{let release:()=>void=()=>{};let gate:Promise<void>|undefined;const p={...protection,encrypt:async(s:string)=>{await gate;return Buffer.from(s);}};const a=new Accounts(root,p,new Logger(root),()=>{});await a.configure('fixture-client-id');await a.login('device');gate=new Promise<void>(resolve=>{release=resolve;});const work=a.logout('fixture-account');await expect(a.login('device')).rejects.toThrow(/progress/);release();await work;expect(a.profiles).toEqual([]);expect(a.busy).toBe(false);});
   it('waits for a cancelled sign-in to settle and rejects its late token',async()=>{const a=accounts();await a.configure('fixture-client-id');let finish:()=>void=()=>{};fixture.deviceGate=new Promise<void>(resolve=>{finish=resolve;});const work=a.login('device');a.cancel();await expect(a.login('device')).rejects.toThrow(/progress/);finish();await work;fixture.deviceGate=undefined;expect(a.busy).toBe(false);expect(a.profiles).toEqual([]);await expect(fs.stat(path.join(root,'accounts.protected'))).rejects.toThrow();});
   it('does not publish an account if protected storage fails',async()=>{const a=new Accounts(root,{...protection,encrypt:()=>{throw new Error('fixture storage failure');}},new Logger(root),()=>{});await a.configure('fixture-client-id');await expect(a.login('device')).rejects.toThrow();expect(a.profiles).toEqual([]);expect(a.selected).toBeUndefined();});

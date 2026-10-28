@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { socialActionSchema } from './social';
 const url = z.string().max(2048).refine(v => !v || (() => { try { const u=new URL(v); return u.protocol==='https:' && !u.username && !u.password && !u.hash; } catch { return false; } })(), 'Use an HTTPS URL without credentials.');
 export const settingsSchema = z.object({
   ramMb:z.number().int().min(2048).max(65536), width:z.number().int().min(640).max(7680), height:z.number().int().min(360).max(4320), fullscreen:z.boolean(),
@@ -10,6 +11,7 @@ export const settingsSchema = z.object({
 }).strict();
 const simple = ['snapshot','directory.choose','java.choose','install','verify','updates.check','cancel','launch','auth.cancel','server.refresh','news.refresh','appUpdates.check','appUpdates.download','appUpdates.cancel','appUpdates.install'] as const;
 export const commandSchema = z.union([
+  z.object({type:z.literal('social.connect')}).strict(),z.object({type:z.literal('social.disconnect')}).strict(),z.object({type:z.literal('social.action'),action:socialActionSchema}).strict(),
   ...simple.map(type=>z.object({type:z.literal(type)}).strict()),
   z.object({type:z.literal('auth.login'),method:z.enum(['browser','device']).optional()}).strict(),
   z.object({type:z.literal('settings.save'),settings:settingsSchema}).strict(),

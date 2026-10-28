@@ -1,4 +1,5 @@
 {
+    "social": { "baseUrl": "" },
     "microsoftClientId":  "ee966e53-e97c-46eb-b6ea-6de2cca23fd5",
     "modpack":  {
                     "manifestUrl":  "",

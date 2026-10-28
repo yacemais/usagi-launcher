@@ -1,0 +1,20 @@
+import { app,BrowserWindow,ipcMain,protocol } from 'electron';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { SocialClient } from '../src/main/social/client';
+import { Controller } from '../src/main/controller';
+import { commandSchema } from '../src/shared/validation';
+import { inside } from '../src/main/security/files';
+app.setPath('userData',path.resolve('.scratch-runtime/social-gui'));
+protocol.registerSchemesAsPrivileged([{scheme:'celestia',privileges:{standard:true,secure:true,supportFetchAPI:true}}]);
+app.enableSandbox();
+void app.whenReady().then(async()=>{
+  const root=process.cwd(),renderer=path.join(root,'dist/renderer');
+  protocol.handle('celestia',async request=>{const file=path.resolve(renderer,new URL(request.url).pathname.slice(1)||'index.html');if(!inside(renderer,file))return new Response(null,{status:403});const type=({'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.woff':'font/woff','.woff2':'font/woff2'} as Record<string,string>)[path.extname(file)]||'application/octet-stream';return new Response(await fs.readFile(file),{headers:{'Content-Type':type,'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'"}});});
+  const window=new BrowserWindow({width:1200,height:760,show:false,backgroundColor:'#262225',webPreferences:{preload:path.join(root,'dist/preload/index.cjs'),sandbox:true,nodeIntegration:false,contextIsolation:true}});
+  const controller=new Controller(app.getPath('userData'),{available:()=>false,encrypt:()=>{throw new Error('No credential fixture');},decrypt:()=>{throw new Error('No credential fixture');}},()=>{},async()=>undefined);controller.state.phase='idle';
+  const client=new SocialClient(process.env.SOCIAL_TEST_ORIGIN!,async()=>({token:process.env.SOCIAL_TEST_TOKEN!}),()=>{controller.state.social=client.state;window.webContents.send('celestia:state',controller.snapshot());},()=>{},true);
+  ipcMain.handle('celestia:request',async(_event,input)=>{try{const request=commandSchema.parse(input);let socialResult:unknown;if(request.type==='social.action')socialResult=await client.action(request.action);else if(request.type==='social.connect')await client.connect();else if(request.type==='social.disconnect')await client.disconnect();else if(request.type!=='snapshot')throw new Error('Unsupported test command.');return {ok:true,state:controller.snapshot(),socialResult};}catch(error){return {ok:false,error:error instanceof Error?error.message:'Request failed'};}});
+  await window.loadURL('celestia://app/index.html');await client.connect();app.on('before-quit',()=>{void client.disconnect(false);});
+});
+app.on('window-all-closed',()=>app.quit());

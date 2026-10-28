@@ -1,5 +1,19 @@
 # Security model
 
+## Social boundaries
+
+Social uses a separate HTTPS/WSS backend. Official Java entitlement/profile checks
+establish launcher identity; client-provided UUIDs are rejected. The server-only
+Forge bridge must remain on a trusted online-mode server. Its secret never belongs
+in Electron, client packs or public configuration. Presence is shared only with
+accepted friends and honors invisible mode.
+
+Backend sessions store token hashes; launcher session tokens stay in main-process
+memory and are revoked on disconnect/account changes. Messaging/history/delivery
+check friendship and bilateral blocks. Unique sender request IDs and recipient-scoped
+acknowledgments protect retries. Message text is not end-to-end encrypted; private
+disk/backup access is required. Crash-time display can be at least once. See SOCIAL.md.
+
 Electron enables sandboxing, context isolation and web security; disables renderer
 Node integration, navigation, new windows and permissions; and serves bundled files
 under an allowlisted local protocol with a restrictive Content Security Policy.

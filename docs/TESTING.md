@@ -1,5 +1,43 @@
 # Usagi test report
 
+## Local 0.3.0 Social and startup verification
+
+The checks below were completed locally before publication. The owner subsequently
+authorized GitHub publication as a development prerelease. No production Social
+deployment has been performed. A pre-change source backup is retained under release/.
+
+| Executed check | Result |
+| --- | --- |
+| Existing baseline | 95 tests passed before feature work |
+| Full TypeScript/Vite/Electron compilation | Passed |
+| Expanded automated suite | 109 tests in 13 files passed |
+| Social persistence, permissions, blocks, visibility, offline inbox | Passed with SQLite and explicit test identities |
+| HTTP/WebSocket round trip, replay rejection, unauthorized inbox, spam | Passed locally |
+| Launcher reconnect and backend restart recovery | Passed with real local sockets/database |
+| Social account cancellation and official-account refresh/logout lock | Passed |
+| Actual Electron startup animation and reduced motion | Passed |
+| Actual Social conversation/privacy UI at normal/minimum size | Passed against real local service with test-only identity verifier |
+| Existing launcher navigation, sandbox, IPC and Windows protection | Passed |
+| Production backend deployment entry point | Passed health/persistent DB creation and rejected UUID-only login; no test verifier |
+| Standalone backend bundle with its locked production dependency | Passed the same health/authorization checks from its own deployment directory |
+| Forge 47.4.28 / Java 17 build | Passed |
+| Forge GameTests | 2 executed and passed: private command registration/console rejection, receipt restart persistence |
+| Real Java BridgeConnection ↔ backend ↔ SocialClient round trip | Passed with test identities; acknowledgments persisted |
+| Windows 0.3.0 NSIS build and packaged app startup | Passed; installer unsigned |
+
+The final presence-privacy revision also passed all 13 Social tests and the Java
+round trip again. No tokens, passwords, backend secrets or real account caches are
+included in source/deployment artifacts. Captures labeled TestAlpha/TestBeta use
+isolated test identities; their game presence is a test lease, not a live player.
+Production entry points have no test-authentication endpoint or bypass.
+
+**Not passed/claimed:** two authenticated clients sending/receiving private messages
+inside Minecraft, live deployed WSS/host recovery, real OS Social notification delivery,
+an installed-version upgrade, physical 60 FPS across GPUs, or the owner's full modpack
+compatibility test. These need staging infrastructure, independent authenticated
+clients and pending Minecraft API approval. Use the acceptance sequence in SOCIAL.md.
+The Social system is not declared production operational.
+
 ## Live Microsoft authentication verification, 28 October 2026
 
 After the owner registered http://localhost as a native/desktop redirect, live public

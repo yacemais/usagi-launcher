@@ -1,7 +1,7 @@
 # Usagi
 
 Usagi is the Windows launcher for Celestia SMP: **Minecraft 1.20.1, Forge 47.4.28,
-Java 17**. Version **0.2.1** continues the existing launcher; the project directory,
+Java 17**. Development preview **0.3.0** continues the existing launcher; the project directory,
 game installer, signed modpack updates and protected player data remain in place.
 
 The interface uses the owner's actual rabbit emblem and USAGI wordmark. It replaces
@@ -9,6 +9,15 @@ the decorative sky layout with warm charcoal surfaces, dusty pink controls and a
 compact account/navigation layout. No AI-generated imagery or branding is used.
 
 ## Current status
+
+- A 2.2 second startup animation uses the original logo, with no generated artwork
+  or fake progress. Reduced motion skips the animation/delay. The independent live
+  startup test passed.
+- Social adds a friends/conversations UI, a separate persistent Node/WebSocket/SQLite
+  service and a server-only Forge bridge. Local protocol, UI and Java transport tests
+  passed; it is **not deployed or verified with two authenticated Minecraft players**.
+  The configured endpoint stays blank until the owner provides infrastructure.
+  See [Social deployment and acceptance](docs/SOCIAL.md).
 
 - The official game/Forge installer, verification, repair, data protection and secure
   Electron boundaries are preserved.
@@ -24,8 +33,8 @@ compact account/navigation layout. No AI-generated imagery or branding is used.
   handoff. The real cache/download path is tested with explicit fixtures. Installing
   a newer release over an installed launcher still needs an end-to-end deployment test.
 - Reviewed source and GitHub Pages are published for yacemais/usagi-launcher after
-  owner approval. The news/site endpoints work; the first signed launcher release
-  and update feed still await separate approval. A local private signing key stays
+  owner approval. The owner has authorized publishing 0.3.0 as a development
+  prerelease on the beta channel. A local private signing key stays
   ignored, with its public key bundled. No Authenticode
   certificate, approved modpack source or game server has been configured.
 
@@ -44,6 +53,13 @@ npm start
 `npm run dev` uses Vite at 127.0.0.1:5173. `npm test` runs the regression suite.
 `npm run test:gui` launches actual Electron. `npm run package:win` builds an NSIS
 installer and `release/win-unpacked/Usagi.exe`. Keep the entire unpacked folder together.
+
+`npm run test:startup` checks the logo transition and reduced motion.
+`npm run build:social` builds the independent backend; `npm run test:social-gui`
+uses real local transport/storage with explicit test identities. Forge build and
+GameTest instructions are in [the server integration](integrations/forge/README.md).
+The Social backend still needs its own deployment; publishing source or installer
+assets does not activate Social or remove Minecraft's application-access requirement.
 
 Owner assets are under branding/ and src/renderer/assets/. To reproduce deterministic
 crops/icons, run `node_modules/.bin/electron.cmd tools/prepare-brand.cjs`.

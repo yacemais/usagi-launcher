@@ -2,7 +2,8 @@
 
 Current owner choice: **https://github.com/yacemais/usagi-launcher**. GitHub Releases
 and Pages workflows are installed; see GITHUB.md. The first source push and Pages
-deployment were approved and completed. No release has been published.
+deployment were approved and completed. The owner has also authorized the 0.3.0
+development prerelease, using the beta update channel and local metadata signing.
 
 Selected setup: **GitHub Releases for launcher installers** and **GitHub Pages for
 signed update feeds, news JSON, changelog and the public website**. Bulk modpack

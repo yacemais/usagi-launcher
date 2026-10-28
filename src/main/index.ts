@@ -10,6 +10,7 @@ import { httpsUrl, secureFetch, limitedBytes } from './security/network';
 import { loadProduct } from './config/product';
 import { AppUpdates } from './app-updates/service';
 import { microsoftBrowserUrl } from './authentication/browser';
+import { SocialClient } from './social/client';
 app.setName('Usagi');
 app.setAppUserModelId('smp.celestia.launcher');
 const testRoot=!app.isPackaged?process.env.USAGI_TEST_DATA||process.env.CELESTIA_TEST_DATA:undefined;
@@ -37,6 +38,9 @@ else app.whenReady().then(async()=>{
   },async url=>shell.openExternal(microsoftBrowserUrl(url)),product);
   appUpdates=new AppUpdates(path.join(app.getPath('userData'),'launcher-updates'),product.launcherUpdates,{version:app.getVersion(),name:'Usagi',isPackaged:app.isPackaged,appUpdateConfigPath:path.join(app.getAppPath(),'config/app-update.yml'),userDataPath:app.getPath('userData'),baseCachePath:path.join(app.getPath('userData'),'launcher-updates'),whenReady:async()=>{await app.whenReady();},relaunch:()=>app.relaunch(),quit:()=>{if(appUpdates?.state.phase==='installing')app.quit();},onQuit:handler=>app.on('quit',(_event,code)=>handler(code))},controller.log,()=>{controller!.state.appUpdate=appUpdates!.state;controller!.emit();},()=>controller!.state.phase==='idle'&&!controller!.accounts.busy);
   controller.state.appUpdate=appUpdates.state;
+  const social=new SocialClient(product.social.baseUrl,()=>controller!.accounts.session(),()=>{controller!.state.social=social.state;controller!.emit();},message=>{if(controller!.settings.value.notifications&&Notification.isSupported())new Notification({title:'Usagi Social',body:message}).show();});
+  controller.state.social=social.state;
+  app.on('before-quit',()=>{void social.disconnect(false);});
   window=new BrowserWindow({width:1200,height:760,minWidth:960,minHeight:620,frame:false,backgroundColor:'#262225',show:false,title:'Usagi',icon:app.isPackaged?path.join(process.resourcesPath,'icon.ico'):path.resolve('build/icon.ico'),webPreferences:{preload:path.resolve(__dirname,'../preload/index.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true,allowRunningInsecureContent:false}});
   window.webContents.setWindowOpenHandler(()=>({action:'deny'}));window.webContents.on('will-navigate',(event,url)=>{if(!trusted(url))event.preventDefault();});
   window.once('ready-to-show',()=>{if(app.isPackaged || process.env.CELESTIA_GUI_TEST!=='1')window?.show();});window.on('maximize',()=>{controller!.state.maximized=true;controller!.emit(true);});window.on('unmaximize',()=>{controller!.state.maximized=false;controller!.emit(true);});
@@ -51,6 +55,9 @@ else app.whenReady().then(async()=>{
       if(appUpdates?.state.phase==='installing'&&!['snapshot','window'].includes(parsed.type))throw new Error('Usagi is restarting to install an update.');
       if(parsed.type==='settings.save'&&appUpdates?.busy)throw new Error('Finish the Usagi update operation before changing settings.');
       switch(parsed.type) {
+        case 'social.connect':await social.connect();break;
+        case 'social.disconnect':await social.disconnect();break;
+        case 'social.action':return {ok:true,socialResult:await social.action(parsed.action),state:c.snapshot()};
         case 'snapshot':return {ok:true,state:c.snapshot()};
         case 'settings.save':{const previous=c.settings.value.appUpdateChannel;await c.save(parsed.settings);if(previous!==c.settings.value.appUpdateChannel)appUpdates!.selectChannel(c.settings.value.appUpdateChannel);break;}
         case 'directory.choose':{const r=await dialog.showOpenDialog(window,{properties:['openDirectory','createDirectory']});return {ok:true,path:r.canceled?undefined:r.filePaths[0]};}
@@ -60,14 +67,14 @@ else app.whenReady().then(async()=>{
         case 'updates.check':await c.checkUpdates();break;
         case 'cancel':c.cancel();break;
         case 'launch':await c.launch(()=>{if(c.settings.value.minimizeOnLaunch || c.settings.value.launchBehavior==='minimize')window?.minimize();});break;
-        case 'auth.login':if(c.state.phase!=='idle')throw new Error('Finish the current operation before signing in.');await c.accounts.login(parsed.method);break;
+        case 'auth.login':if(c.state.phase!=='idle')throw new Error('Finish the current operation before signing in.');await social.disconnect();await c.accounts.login(parsed.method);if(product.social.baseUrl)void social.connect().catch(()=>{});break;
         case 'appUpdates.check':await appUpdates!.check(c.settings.value.appUpdateChannel);break;
         case 'appUpdates.download':await appUpdates!.download();break;
         case 'appUpdates.cancel':appUpdates!.cancel();break;
         case 'appUpdates.install':{if(c.state.phase!=='idle'||c.accounts.busy)throw new Error('Close Minecraft and finish the current operation first.');const answer=await dialog.showMessageBox(window,{type:'question',buttons:['Cancel','Restart and install'],defaultId:0,cancelId:0,message:'Install the downloaded Usagi update?',detail:'Usagi will close and open the verified Windows installer. Minecraft files and player data remain in their current folder.'});if(answer.response===1)await appUpdates!.install();break;}
         case 'auth.cancel':c.accounts.cancel();break;
-        case 'auth.logout':if(c.state.phase!=='idle')throw new Error('Close Minecraft or finish the operation before changing accounts.');await c.accounts.logout(parsed.accountId);break;
-        case 'auth.select':if(c.state.phase!=='idle')throw new Error('Close Minecraft or finish the operation before changing accounts.');await c.accounts.select(parsed.accountId);break;
+        case 'auth.logout':if(c.state.phase!=='idle')throw new Error('Close Minecraft or finish the operation before changing accounts.');await social.disconnect();await c.accounts.logout(parsed.accountId);break;
+        case 'auth.select':if(c.state.phase!=='idle')throw new Error('Close Minecraft or finish the operation before changing accounts.');await social.disconnect();await c.accounts.select(parsed.accountId);if(product.social.baseUrl)void social.connect().catch(()=>{});break;
         case 'server.refresh':await c.refreshServer();break;
         case 'news.refresh':await c.refreshNews();break;
         case 'external.open':await shell.openExternal(httpsUrl(parsed.url).href);break;
@@ -77,7 +84,7 @@ else app.whenReady().then(async()=>{
       return {ok:true,state:c.snapshot()};
     }catch(error){const text=controller?.log.clean(error instanceof Error?error.message:'Request failed.') ?? 'Request failed.';return {ok:false,error:text};}
   });
-  await window.loadURL(devUrl || 'celestia://app/index.html');void controller.initialise().then(()=>{if(appUpdates!.state.phase!=='unconfigured')void appUpdates!.check(controller!.settings.value.appUpdateChannel).catch(error=>controller!.log.write(String(error),'app-updates.log'));});
+  await window.loadURL(devUrl || 'celestia://app/index.html');void controller.initialise().then(()=>{if(product.social.baseUrl&&controller!.accounts.selected)void social.connect().catch(()=>{});if(appUpdates!.state.phase!=='unconfigured')void appUpdates!.check(controller!.settings.value.appUpdateChannel).catch(error=>controller!.log.write(String(error),'app-updates.log'));});
   const timer=setInterval(()=>void controller?.refreshServer(),60000);timer.unref();
 });
 app.on('second-instance',()=>{if(window?.isMinimized())window.restore();window?.focus();});app.on('window-all-closed',()=>app.quit());

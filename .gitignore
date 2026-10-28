@@ -32,3 +32,11 @@ hosts.yml
 docs/credential-migration-results.json
 *.pem
 !examples/public-key.example.pem
+services/social/dist/
+services/social/data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+integrations/forge/.gradle/
+integrations/forge/build/
+integrations/forge/run/

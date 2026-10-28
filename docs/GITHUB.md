@@ -2,8 +2,10 @@
 
 Repository: https://github.com/yacemais/usagi-launcher. The owner approved the first
 source push and Pages setup. Reviewed commit 9cee394 was pushed to main; Pages is
-enabled with GitHub Actions as its source. No release or signing-secret upload has
-been approved or performed; those require separate owner review.
+enabled with GitHub Actions as its source. The owner subsequently authorized
+publishing 0.3.0 as a development prerelease. Its beta metadata is signed locally;
+the private signing key is not uploaded to GitHub. Social deployment and live
+Minecraft validation remain pending, independently of source/installer hosting.
 
 ## Authentication
 
@@ -52,9 +54,11 @@ https://github.com/yacemais/usagi-launcher/releases
 ```
 
 The site, news JSON and owner wordmark were verified over HTTPS with status 200.
-The launcher public config points at these feeds. There is no published release,
-so launcher/channels/stable.json correctly returns 404 rather than a fabricated
-download. The release workflow must be completed before launcher updates are available.
+The 0.3.0 development release targets launcher/channels/beta.json. The stable channel
+remains absent until a stable release is explicitly published. Select beta in
+Updates > Usagi launcher to check development updates; default stable clients are
+not moved to beta automatically. Publishing a prerelease triggers the Pages workflow,
+which verifies its signed metadata before exposing the channel.
 OAuth redirects to **http://localhost**, never to GitHub Pages.
 
 ## One-time owner setup after approving publication

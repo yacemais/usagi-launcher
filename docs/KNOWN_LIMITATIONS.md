@@ -1,5 +1,16 @@
 # Known limitations
 
+- Social has local protocol/GUI and Java transport verification, but is not deployed
+  or verified between two authenticated players inside Minecraft. It needs a private
+  Node 24 service/SQLite volume, an HTTPS/WSS origin, a server-only bridge secret and
+  Minecraft API application approval. The launcher defaults to unconfigured Social.
+  See SOCIAL.md for deployment, delivery crash windows and the live acceptance plan.
+- Social uses one backend process and one active trusted Minecraft bridge. It has no
+  multi-region/replica coordination or end-to-end message encryption. Crash-time
+  delivery is at least once; ordinary reconnects deduplicate stable message IDs.
+- The splash targets 60 FPS with CSS opacity/transforms. Timing, accessibility and
+  transitions are tested; physical 60 FPS on every GPU/display is not guaranteed.
+
 - Real Microsoft browser OAuth, Xbox Live and XSTS passed, but Minecraft Services
   rejects Usagi's client ID with HTTP 403, Invalid app registration. Minecraft API
   application access must be approved before real Java entitlement/profile retrieval,

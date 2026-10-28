@@ -61,12 +61,14 @@ export class Accounts {
   }
   async session():Promise<MinecraftSession> {
     if(this.busy)throw new Error('Finish or cancel sign-in before launching.');
+    return this.changeAccount('Refreshing your Microsoft session',async()=>{
     if(!this.client || !this.selected) throw new Error('Sign in with a Microsoft account that owns Minecraft Java.');
     const account=(await this.client.getTokenCache().getAllAccounts()).find(a=>a.homeAccountId===this.selected); if(!account) throw new Error('Your account needs to sign in again.');
     let result:AuthenticationResult;
     try { result=await this.client.acquireTokenSilent({account,scopes:['XboxLive.signin','offline_access']}); }
     catch { throw new Error('Your Microsoft session needs to be renewed. Sign in again.'); }
     const session=await this.minecraft(result);const profiles=this.profiles.map(p=>p.accountId===session.profile.accountId?session.profile:p);await this.save(this.client,profiles);this.profiles=profiles;return session;
+    });
   }
   private async minecraft(result:AuthenticationResult,signal:AbortSignal=AbortSignal.timeout(45000),serial?:number):Promise<MinecraftSession> {
     const step=async <T>(label:string,work:()=>Promise<T>)=>{if(serial===this.serial){this.stage=label;this.changed();}try{const result=await work();this.log.write(label+': completed.','authentication.log');return result;}catch(error){signal.throwIfAborted();const failure=new MinecraftAuthError(label,error);this.log.write(failure.message,'authentication.log');throw failure;}};
@@ -80,7 +82,7 @@ export class Accounts {
     const skin=(profile as {skins?:{url:string;state:string}[]}).skins?.find(s=>s.state==='ACTIVE')?.url;
     return {token:token.access_token,profile:{id:profile.id,name:profile.name,accountId:result.account.homeAccountId,avatar:skin?await this.avatar(skin).catch(()=>undefined):undefined}};
   }
-  private async changeAccount(stage:string,work:()=>Promise<void>){if(this.busy)throw new Error('Finish the current account operation first.');this.busy=true;this.stage=stage;this.changed();try{await work();}finally{this.busy=false;this.stage=undefined;this.changed();}}
+  private async changeAccount<T>(stage:string,work:()=>Promise<T>):Promise<T>{if(this.busy)throw new Error('Finish the current account operation first.');this.busy=true;this.stage=stage;this.changed();try{return await work();}finally{this.busy=false;this.stage=undefined;this.changed();}}
   async select(id:string){if(!this.profiles.some(p=>p.accountId===id))throw new Error('Unknown account.');await this.changeAccount('Selecting account',async()=>{await this.save(this.client,this.profiles,{selected:id});this.selected=id;});}
   async logout(id:string){if(!this.client)return;if(!this.profiles.some(p=>p.accountId===id))throw new Error('Unknown account.');await this.changeAccount('Signing out',async()=>{const client=this.createClient();client.getTokenCache().deserialize(this.client!.getTokenCache().serialize());const account=(await client.getTokenCache().getAllAccounts()).find(a=>a.homeAccountId===id);if(account)await client.getTokenCache().removeAccount(account);const profiles=this.profiles.filter(p=>p.accountId!==id),selected=this.selected===id?profiles[0]?.accountId:this.selected;await this.save(client,profiles,{selected});this.client=client;this.profiles=profiles;this.selected=selected;});}
 }

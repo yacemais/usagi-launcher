@@ -1,0 +1,23 @@
+[Unit]
+Description=Usagi Social
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=usagi-social
+Group=usagi-social
+WorkingDirectory=/opt/usagi-social
+EnvironmentFile=/etc/usagi-social/environment
+ExecStart=/usr/bin/node /opt/usagi-social/dist/main.cjs
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/usagi-social
+
+[Install]
+WantedBy=multi-user.target

@@ -1,10 +1,17 @@
 # Configuration
 
-Usagi 0.2.0 also bundles public owner defaults in config/usagi.json. Fill those before
+Usagi bundles public owner defaults in config/usagi.json. Fill those before
 building a distributed release. Launcher update URLs/trust keys are supplied only by
 that packaged configuration; ordinary player settings do not authorize executable
 updates. See MICROSOFT_AUTH.md, LAUNCHER_UPDATES.md and HOSTING.md for the current setup.
 The Updates > Usagi launcher tab saves the stable/beta appUpdateChannel preference.
+
+Social's owner-controlled social.baseUrl is an HTTPS origin in config/usagi.json,
+blank by default. It is separate from the launcher update/news hosts and cannot be
+set to an arbitrary renderer URL. Old configurations load the new field as blank.
+Players manage Social privacy/visibility/notifications in Social > Privacy; those
+preferences persist server-side. The bridge secret belongs only in the backend and
+Forge server environments, never in this public config. See SOCIAL.md.
 
 Settings are persisted under the application data folder. Edit through the UI, or
 close the application before editing settings.json. Invalid stored settings fail

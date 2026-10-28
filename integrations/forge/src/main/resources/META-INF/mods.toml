@@ -1,0 +1,21 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+[[mods]]
+modId="usagisocial"
+version="0.1.0"
+displayName="Usagi Social"
+displayTest="IGNORE_ALL_VERSION"
+description='''Private friends and messaging bridge for the Usagi Launcher.'''
+[[dependencies.usagisocial]]
+modId="forge"
+mandatory=true
+versionRange="[47.4.28,48)"
+ordering="NONE"
+side="SERVER"
+[[dependencies.usagisocial]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.20.2)"
+ordering="NONE"
+side="SERVER"

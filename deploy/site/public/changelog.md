@@ -1,5 +1,17 @@
 # Usagi development releases
 
+## 0.3.0 — development preview
+
+- Original-logo startup animation, reduced motion and live transition checks.
+- Social friends, private conversations, privacy and presence UI.
+- Separate persistent HTTP/WebSocket/SQLite backend with verified identity, blocks,
+  rate limits, offline delivery and stable message IDs.
+- Server-only Forge bridge and private /usagi commands, with Java transport
+  round-trip and Forge GameTest coverage.
+
+Not deployed or tested between two authenticated in-game clients. Minecraft API
+approval, staging infrastructure and the live acceptance plan remain required.
+
 ## 0.2.1
 
 - Integrated the owner's registered Microsoft public application ID.
