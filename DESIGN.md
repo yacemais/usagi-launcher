@@ -14,8 +14,10 @@ Updates separates the game from the application. Use clear headings, generous sp
 readable 12–13px control text and visible keyboard focus. At 960×620, main content
 scrolls while navigation/title bar stay usable. Respect reduced motion.
 
-Startup reuses the transparent owner emblem/wordmark in a restrained 2.2 second CSS
-fade/scale transition over the application. Six small stars and a faint glow are
+Startup reuses the transparent owner emblem/wordmark in a restrained 2.6 second CSS
+fade/scale transition, starting after the native window is visible and the logo is
+decoded. The 0.55 second entrance does not complete the splash; only the outer exit
+animation does. Six small stars and a faint glow are
 the only added decoration. Reduced motion skips the animation and delay. There is
 no simulated loading progress. Social uses the same surfaces/type/buttons, a compact
 friends column and a readable conversation; all real statuses come from the service.

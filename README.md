@@ -1,12 +1,14 @@
 # Usagi
 
 Usagi is the Windows launcher for Celestia SMP: **Minecraft 1.20.1, Forge 47.4.28,
-Java 17**. Development preview **0.3.0** continues the existing launcher; the project directory,
+Java 17**. Development preview **0.3.1** continues the existing launcher; the project directory,
 game installer, signed modpack updates and protected player data remain in place.
 
-[Download the 0.3.0 development preview](https://github.com/yacemais/usagi-launcher/releases/tag/v0.3.0).
-The release includes the Windows installer, source, Social backend bundle and Forge
-bridge. Social still needs deployment and Minecraft API approval before live use.
+[Download the 0.3.1 development preview](https://github.com/yacemais/usagi-launcher/releases/tag/v0.3.1).
+The release includes the Windows installer, complete unpacked folder and source.
+Version 0.3.1 fixes startup timing. The unchanged Social backend and Forge bridge
+remain available in [0.3.0](https://github.com/yacemais/usagi-launcher/releases/tag/v0.3.0).
+Social still needs deployment and Minecraft API approval before live use.
 
 The interface uses the owner's actual rabbit emblem and USAGI wordmark. It replaces
 the decorative sky layout with warm charcoal surfaces, dusty pink controls and a
@@ -14,9 +16,10 @@ compact account/navigation layout. No AI-generated imagery or branding is used.
 
 ## Current status
 
-- A 2.2 second startup animation uses the original logo, with no generated artwork
-  or fake progress. Reduced motion skips the animation/delay. The independent live
-  startup test passed.
+- A 2.6 second startup animation uses the original logo, with no generated artwork
+  or fake progress. It starts when the native window is visible, after decoding the
+  logo. Reduced motion skips the animation/delay. Actual source and packaged-window
+  timing tests passed, including a window kept hidden for 2.8 seconds.
 - Social adds a friends/conversations UI, a separate persistent Node/WebSocket/SQLite
   service and a server-only Forge bridge. Local protocol, UI and Java transport tests
   passed; it is **not deployed or verified with two authenticated Minecraft players**.
@@ -37,7 +40,7 @@ compact account/navigation layout. No AI-generated imagery or branding is used.
   handoff. The real cache/download path is tested with explicit fixtures. Installing
   a newer release over an installed launcher still needs an end-to-end deployment test.
 - Reviewed source and GitHub Pages are published for yacemais/usagi-launcher after
-  owner approval. The owner has authorized publishing 0.3.0 as a development
+  owner approval. The owner has authorized publishing 0.3.1 as a development
   prerelease on the beta channel. A local private signing key stays
   ignored, with its public key bundled. No Authenticode
   certificate, approved modpack source or game server has been configured.
@@ -58,7 +61,8 @@ npm start
 `npm run test:gui` launches actual Electron. `npm run package:win` builds an NSIS
 installer and `release/win-unpacked/Usagi.exe`. Keep the entire unpacked folder together.
 
-`npm run test:startup` checks the logo transition and reduced motion.
+`npm run test:startup` checks hidden-window timing, the logo transition and reduced
+motion. Set `USAGI_PACKAGED_EXE` to test a packaged executable with an isolated profile.
 `npm run build:social` builds the independent backend; `npm run test:social-gui`
 uses real local transport/storage with explicit test identities. Forge build and
 GameTest instructions are in [the server integration](integrations/forge/README.md).

@@ -1,5 +1,33 @@
 # Usagi test report
 
+## 0.3.1 startup timing fix
+
+The 0.3.0 duration check established that the splash appeared, but did not measure
+its full visible duration. Reproduction showed the old timer could finish while
+the native window was still hidden. The fix queries native window visibility through
+validated IPC and starts after image decoding and two animation frames. Only the
+outer exit animation completes the splash; child animation events are ignored.
+
+Executed on Windows with isolated test profiles:
+
+- TypeScript/Vite/Electron compilation: passed.
+- Full regression suite: 110 tests in 13 files passed.
+- Actual source Electron window: remained pending through 2,800 ms hidden, then
+  completed 2,669 ms after showing the window.
+- Actual packaged 0.3.1 executable, hidden/reload/show regression: remained pending
+  through 2,800 ms hidden, then completed 2,657 ms after showing the window.
+- Reduced motion and rejection of forged visibility request fields: passed in both.
+- Launcher navigation/security GUI and local Social GUI regressions: passed.
+- Actual packaged executable: startup, isolated profile, production protocol,
+  navigation, renderer sandbox and Windows credential protection passed.
+- NSIS 0.3.1 installer: built successfully, unsigned; installer execution not tested.
+- Complete unpacked ZIP: all 75 file hashes match the tested Windows build.
+
+These measurements use native visibility and DOM removal timestamps, not a physical
+display/60 FPS measurement. Source logs are `startup-fix-*-run.log`; timing evidence
+is `docs/startup-timing-results.json` and `docs/startup-packaged-timing-results.json`.
+The public v0.3.0 assets remain unchanged and still contain the old timing behavior.
+
 ## GitHub publication verification
 
 The owner authorized GitHub publication. Commit f0cc530 is tagged as the public

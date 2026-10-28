@@ -9,7 +9,7 @@ export const settingsSchema = z.object({
   manifestUrl:url, manifestPublicKey:z.string().max(4096), newsUrl:url, serverHost:z.string().max(253).refine(v=>!v || /^[a-zA-Z0-9.:-]+$/.test(v),'Enter a hostname or IP address.'),
   serverPort:z.number().int().min(1).max(65535), microsoftClientId:z.string().refine(v=>!v || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v),'Enter an application client ID.'), optionalFiles:z.array(z.string().max(200)).max(1000), autoJoin:z.boolean()
 }).strict();
-const simple = ['snapshot','directory.choose','java.choose','install','verify','updates.check','cancel','launch','auth.cancel','server.refresh','news.refresh','appUpdates.check','appUpdates.download','appUpdates.cancel','appUpdates.install'] as const;
+const simple = ['startup.visibility','snapshot','directory.choose','java.choose','install','verify','updates.check','cancel','launch','auth.cancel','server.refresh','news.refresh','appUpdates.check','appUpdates.download','appUpdates.cancel','appUpdates.install'] as const;
 export const commandSchema = z.union([
   z.object({type:z.literal('social.connect')}).strict(),z.object({type:z.literal('social.disconnect')}).strict(),z.object({type:z.literal('social.action'),action:socialActionSchema}).strict(),
   ...simple.map(type=>z.object({type:z.literal(type)}).strict()),

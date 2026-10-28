@@ -1,7 +1,12 @@
 # Actual Usagi screenshots
 
+0.3.1 timing-fix captures:
+- startup.png and startup-packaged-0.3.1.png: owner logo during the corrected splash,
+  from source Electron and the actual packaged Windows executable respectively.
+- home-1200.png, packaged-home.png and the three Social images below were refreshed
+  by the regression runs; their test-identity limitations still apply.
+
 Local 0.3.0 captures:
-- startup.png: actual logo animation in Electron, captured during fade-in.
 - social-unconfigured-1200.png: production Social with no endpoint configured.
 - social-conversation-test.png and social-privacy-test.png: real React UI against
   the local HTTP/WebSocket/SQLite service. TestAlpha/TestBeta are explicitly isolated

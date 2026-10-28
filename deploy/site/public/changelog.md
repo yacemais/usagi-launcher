@@ -1,5 +1,17 @@
 # Usagi development releases
 
+## 0.3.1 — startup timing fix
+
+- The original-logo animation starts after the native window is visible and logo
+  assets have decoded, keeping its full 2.6 second duration visible.
+- Reduced motion still skips the animation. Hidden-window and packaged Windows
+  timing regressions passed; 110 automated regression tests passed.
+- Windows installer and complete unpacked ZIP are available. Extract the entire
+  unpacked ZIP before launching `win-unpacked/Usagi.exe`.
+
+This remains a beta development preview. Minecraft Services application approval
+and live Social deployment/testing are still pending; authentication is not bypassed.
+
 ## 0.3.0 — development preview
 
 - Original-logo startup animation, reduced motion and live transition checks.

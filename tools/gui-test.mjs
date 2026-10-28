@@ -4,7 +4,7 @@ import path from 'node:path';
 const root=path.resolve('.scratch-runtime/gui');await fs.mkdir(root,{recursive:true});await fs.mkdir('docs/screenshots',{recursive:true});
 const application=await electron.launch({args:['.'],env:{...process.env,CELESTIA_TEST_DATA:root,CELESTIA_GUI_TEST:'1'}});
 try {
-  const page=await application.firstWindow();const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.waitForSelector('.hero');await page.evaluate(()=>document.fonts.ready);await expect(page.locator('.startup-splash')).toHaveCount(0,{timeout:3500});await expect(page.getByRole('button',{name:'INSTALL',exact:true})).toBeEnabled();
+  const page=await application.firstWindow();await application.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].show());const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.waitForSelector('.hero');await page.evaluate(()=>document.fonts.ready);await expect(page.locator('.startup-splash')).toHaveCount(0,{timeout:4000});await expect(page.getByRole('button',{name:'INSTALL',exact:true})).toBeEnabled();
   const prefs=await application.evaluate(({BrowserWindow})=>{const p=BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();return {sandbox:p.sandbox,contextIsolation:p.contextIsolation,nodeIntegration:p.nodeIntegration};});
   expect(prefs).toEqual({sandbox:true,contextIsolation:true,nodeIntegration:false});expect(await page.evaluate(()=>({require:typeof window.require,process:typeof window.process}))).toEqual({require:'undefined',process:'undefined'});
   const bad=await page.evaluate(()=>window.celestia.request({type:'launch',accessToken:'forged'}));expect(bad.ok).toBe(false);

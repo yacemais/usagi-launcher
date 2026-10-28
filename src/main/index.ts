@@ -55,6 +55,7 @@ else app.whenReady().then(async()=>{
       if(appUpdates?.state.phase==='installing'&&!['snapshot','window'].includes(parsed.type))throw new Error('Usagi is restarting to install an update.');
       if(parsed.type==='settings.save'&&appUpdates?.busy)throw new Error('Finish the Usagi update operation before changing settings.');
       switch(parsed.type) {
+        case 'startup.visibility':return {ok:true,visible:window.isVisible()&&!window.isMinimized()};
         case 'social.connect':await social.connect();break;
         case 'social.disconnect':await social.disconnect();break;
         case 'social.action':return {ok:true,socialResult:await social.action(parsed.action),state:c.snapshot()};

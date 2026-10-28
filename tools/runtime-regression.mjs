@@ -9,7 +9,7 @@ const target=path.join(root,'runtime/minecraft',relative),original=await fs.read
 const results=[];
 let application;
 async function idle(page,timeout=60000){const deadline=Date.now()+timeout;while(Date.now()<deadline){const r=await page.evaluate(()=>window.celestia.request({type:'snapshot'}));if(r.ok && r.state.phase==='idle')return r;await new Promise(resolve=>setTimeout(resolve,250));}throw new Error('Waiting for launcher idle timed out.');}
-async function start(){application=await electron.launch({args:['.'],env:{...process.env,CELESTIA_TEST_DATA:root,CELESTIA_GUI_TEST:'1'},timeout:60000});const page=await application.firstWindow();page.setDefaultTimeout(60000);await page.waitForSelector('.hero');await idle(page);console.log('STARTUP VERIFIED');return page;}
+async function start(){application=await electron.launch({args:['.'],env:{...process.env,CELESTIA_TEST_DATA:root,CELESTIA_GUI_TEST:'1'},timeout:60000});const page=await application.firstWindow();await application.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].show());page.setDefaultTimeout(60000);await page.waitForSelector('.hero');await idle(page);console.log('STARTUP VERIFIED');return page;}
 try {
   let page=await start();let r=await page.evaluate(()=>window.celestia.request({type:'snapshot'}));expect(r.ok).toBe(true);expect(r.state.message).toContain('Minecraft is installed');expect(r.state.installation).toBe('missing');results.push('restart verifies persisted official runtime; missing signed pack keeps PLAY disabled');
   console.log('CLOSING FIRST WINDOW');await application.close();application=undefined;console.log('CLOSED FIRST WINDOW');

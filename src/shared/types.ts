@@ -26,6 +26,7 @@ export interface Snapshot {
   java?:{ path:string; version:string; major:number }; gameExit?:{ code:number|null; crashed:boolean; at:string }; maximized:boolean;
 }
 export type Command =
+  | {type:'startup.visibility'}
   | {type:'social.connect'} | {type:'social.disconnect'} | {type:'social.action';action:SocialAction}
   | {type:'snapshot'} | {type:'settings.save'; settings:Settings} | {type:'directory.choose'} | {type:'java.choose'}
   | {type:'install'} | {type:'verify'} | {type:'updates.check'} | {type:'cancel'} | {type:'launch'}
@@ -33,5 +34,5 @@ export type Command =
   | {type:'appUpdates.check'} | {type:'appUpdates.download'} | {type:'appUpdates.cancel'} | {type:'appUpdates.install'}
   | {type:'server.refresh'} | {type:'news.refresh'} | {type:'external.open'; url:string}
   | {type:'folder.open'; folder:'logs'|'game'|'crashes'} | {type:'window'; action:'minimize'|'maximize'|'close'};
-export type Response = {ok:true; state?:Snapshot; path?:string;socialResult?:unknown} | {ok:false; error:string};
+export type Response = {ok:true; state?:Snapshot; path?:string;socialResult?:unknown;visible?:boolean} | {ok:false; error:string};
 export interface LauncherApi { request(command:Command):Promise<Response>; subscribe(listener:(state:Snapshot)=>void):()=>void }

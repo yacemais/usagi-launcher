@@ -4,7 +4,7 @@ import path from 'node:path';
 const root=path.resolve('.scratch-runtime/install smoke');await fs.mkdir(root,{recursive:true});await fs.mkdir('docs/screenshots',{recursive:true});
 const application=await electron.launch({args:['.'],env:{...process.env,CELESTIA_TEST_DATA:root,CELESTIA_GUI_TEST:'1'},timeout:60000});
 try {
-  const page=await application.firstWindow();page.setDefaultTimeout(60000);await page.waitForSelector('.hero');
+  const page=await application.firstWindow();await application.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].show());page.setDefaultTimeout(60000);await page.waitForSelector('.hero');
   await page.getByRole('button',{name:'Updates',exact:true}).click();
   await page.getByRole('button',{name:'Install Minecraft & modpack',exact:true}).click();
   let captured=false,last='';const deadline=Date.now()+20*60*1000;
