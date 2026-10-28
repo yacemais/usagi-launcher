@@ -11,7 +11,20 @@ concurrency:
   group: usagi-pages
   cancel-in-progress: false
 jobs:
+  refresh-from-main:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Refresh published feeds from the protected main branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run pages.yml --ref main
   build:
+    if: github.event_name != 'release' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -34,6 +47,7 @@ jobs:
         with:
           path: _site
   deploy:
+    if: github.event_name != 'release' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     permissions:

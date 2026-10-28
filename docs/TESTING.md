@@ -1,5 +1,17 @@
 # Usagi test report
 
+## GitHub publication verification
+
+The owner authorized GitHub publication. Commit f0cc530 is tagged as the public
+v0.3.0 development prerelease. Hosted Windows run 40742972818 passed its audit,
+109 tests and NSIS build. All six release asset sizes and GitHub SHA-256 digests
+matched the local reviewed files. Private signing keys remained local.
+
+Release-triggered Pages run 40743821908 successfully built and verified the signed
+beta feed, then GitHub blocked deployment from its tag due to the main-only Pages
+environment rule. The workflow now dispatches release refreshes from main, with
+branch guards and a regression check. Live beta-feed verification follows deployment.
+
 ## Local 0.3.0 Social and startup verification
 
 The checks below were completed locally before publication. The owner subsequently

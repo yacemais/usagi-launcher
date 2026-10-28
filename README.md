@@ -4,6 +4,10 @@ Usagi is the Windows launcher for Celestia SMP: **Minecraft 1.20.1, Forge 47.4.2
 Java 17**. Development preview **0.3.0** continues the existing launcher; the project directory,
 game installer, signed modpack updates and protected player data remain in place.
 
+[Download the 0.3.0 development preview](https://github.com/yacemais/usagi-launcher/releases/tag/v0.3.0).
+The release includes the Windows installer, source, Social backend bundle and Forge
+bridge. Social still needs deployment and Minecraft API approval before live use.
+
 The interface uses the owner's actual rabbit emblem and USAGI wordmark. It replaces
 the decorative sky layout with warm charcoal surfaces, dusty pink controls and a
 compact account/navigation layout. No AI-generated imagery or branding is used.

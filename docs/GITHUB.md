@@ -7,6 +7,13 @@ publishing 0.3.0 as a development prerelease. Its beta metadata is signed locall
 the private signing key is not uploaded to GitHub. Social deployment and live
 Minecraft validation remain pending, independently of source/installer hosting.
 
+Release v0.3.0 is public as a development prerelease. All six uploaded asset sizes
+and SHA-256 digests matched the reviewed local files. Windows build/test run
+40742972818 passed. The first release-triggered Pages run built the signed feed but
+its deploy job was blocked because the github-pages environment allows only main.
+The workflow now dispatches release refreshes onto main and keeps that deployment
+rule intact; it does not broaden access to arbitrary tags or upload signing keys.
+
 ## Authentication
 
 GitHub CLI was authenticated as yacemais and repository ADMIN access was verified.
@@ -58,7 +65,7 @@ The 0.3.0 development release targets launcher/channels/beta.json. The stable ch
 remains absent until a stable release is explicitly published. Select beta in
 Updates > Usagi launcher to check development updates; default stable clients are
 not moved to beta automatically. Publishing a prerelease triggers the Pages workflow,
-which verifies its signed metadata before exposing the channel.
+which refreshes from main and verifies signed metadata before exposing the channel.
 OAuth redirects to **http://localhost**, never to GitHub Pages.
 
 ## One-time owner setup after approving publication
