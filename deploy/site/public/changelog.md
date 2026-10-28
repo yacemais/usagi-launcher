@@ -1,5 +1,15 @@
 # Usagi development releases
 
+## 0.3.2 — branding update
+
+- Renamed remaining visible Celestia references to Usagi / Usagi SMP on Home,
+  Social, News, Updates, Settings, installation status and the download page.
+- Updated Windows package description/author. Existing data directories, installer
+  identity, protocol and managed-file records stay compatible.
+
+This remains a beta development preview. Minecraft Services application approval
+and live Social deployment/testing are still pending.
+
 ## 0.3.1 — startup timing fix
 
 - The original-logo animation starts after the native window is visible and logo

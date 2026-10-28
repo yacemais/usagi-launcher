@@ -1,5 +1,11 @@
 # Actual Usagi screenshots
 
+0.3.2 branding captures:
+- home-1200.png, home-960.png, packaged-home.png and the three Social captures were
+  refreshed in actual Electron windows and show Usagi / Usagi SMP.
+- news-1200.png, updates-1200.png and settings-1200.png were refreshed by the same
+  navigation test. Social captures still use explicit isolated test identities.
+
 0.3.1 timing-fix captures:
 - startup.png and startup-packaged-0.3.1.png: owner logo during the corrected splash,
   from source Electron and the actual packaged Windows executable respectively.

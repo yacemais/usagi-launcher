@@ -26,7 +26,7 @@ export class Controller {
   private progress(progress:Progress) {this.state.progress=progress;this.state.message=progress.phase;this.emit();}
   private updater() { return new PackUpdater(this.settings.value.gameDirectory,p=>this.progress(p)); }
   async initialise() {
-    try {await this.settings.load();const s=this.settings.value,p=this.product;if(p.microsoftClientId)s.microsoftClientId=p.microsoftClientId;s.manifestUrl ||=p.modpack.manifestUrl;s.manifestPublicKey ||=p.modpack.publicKey;s.newsUrl ||=p.newsUrl;if(!s.serverHost&&p.server.host){s.serverHost=p.server.host;s.serverPort=p.server.port;}this.settings.validate(s);await this.accounts.configure(s.microsoftClientId);await this.verifyInternal();if(this.state.installation==='ready')this.state.message='Celestia SMP is ready.';}
+    try {await this.settings.load();const s=this.settings.value,p=this.product;if(p.microsoftClientId)s.microsoftClientId=p.microsoftClientId;s.manifestUrl ||=p.modpack.manifestUrl;s.manifestPublicKey ||=p.modpack.publicKey;s.newsUrl ||=p.newsUrl;if(!s.serverHost&&p.server.host){s.serverHost=p.server.host;s.serverPort=p.server.port;}this.settings.validate(s);await this.accounts.configure(s.microsoftClientId);await this.verifyInternal();if(this.state.installation==='ready')this.state.message='Usagi SMP is ready.';}
     catch(error) {this.failure(error);}
     finally {this.state.phase='idle';this.emit(true);void this.refreshServer();void this.refreshNews();if(this.state.installation==='ready' && this.settings.value.manifestUrl)void this.checkUpdates().catch(error=>this.log.write('Automatic update check could not start: '+this.log.clean(String(error))));}
   }
@@ -58,7 +58,7 @@ export class Controller {
     if(!s.manifestUrl || !s.manifestPublicKey) {this.state.installation='missing';this.state.message='Minecraft, Forge and Java are installed. Add a signed modpack source in Settings.';return;}
     this.state.phase='updating';const result=await this.updater().check(s.manifestUrl,s.manifestPublicKey,signal);this.state.availableVersion=result.manifest.version;
     await this.updater().update(result.manifest,result.envelope,s.optionalFiles,signal,s.concurrency);await this.verifyInternal(signal);
-    if(this.snapshot().installation!=='ready')throw new Error('Installation verification did not pass. Use Repair before playing.');this.state.updateAvailable=false;this.state.message='Celestia SMP is installed and verified.';
+    if(this.snapshot().installation!=='ready')throw new Error('Installation verification did not pass. Use Repair before playing.');this.state.updateAvailable=false;this.state.message='Usagi SMP is installed and verified.';
   });}
   cancel() {this.abort?.abort(new Error('Cancelled by user.'));}
   async settled() {await this.operation;}

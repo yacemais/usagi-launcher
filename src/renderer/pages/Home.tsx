@@ -11,7 +11,7 @@ export function Home({state,request,navigate}:{state:Snapshot;request:Request;na
   const label=playLabel(state),profile=state.profiles.find(p=>p.accountId===state.selectedAccount),busy=state.phase!=='idle'||state.authBusy;
   const action=()=>{if(label==='PLAY NOW'){if(!profile){navigate('account');return;}void request({type:'launch'});}else{navigate('updates');void request({type:'install'});}};
   return <div className="home-page">
-    <section className="hero" aria-labelledby="hero-heading"><div className="hero-copy"><span className="eyebrow">YOUR MODPACK</span><h1 id="hero-heading">Celestia SMP</h1><p className="hero-subtitle">Minecraft, with a little more to discover.</p>
+    <section className="hero" aria-labelledby="hero-heading"><div className="hero-copy"><span className="eyebrow">YOUR MODPACK</span><h1 id="hero-heading">Usagi SMP</h1><p className="hero-subtitle">Minecraft, with a little more to discover.</p>
       <button className="play-button" onClick={action} disabled={busy}><span>{label==='INSTALL'?<Download size={18}/>:label==='REPAIR'?<Wrench size={18}/>:<Play size={18}/>} {label}</span><ArrowRight size={19}/></button>
       <p className="hero-meta"><i className={state.installation==='ready'?'positive-dot':'muted-dot'}/>{state.installation==='ready'?'Installation verified':state.installation==='repair'?'Files need repair':'Installation required'}{state.installedVersion&&<span> · {state.installedVersion}</span>}</p>
     </div><div className="hero-art"><img src={mark} alt="Owner-provided Usagi rabbit emblem"/></div></section>

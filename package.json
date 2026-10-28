@@ -1,9 +1,9 @@
 {
   "name": "usagi-launcher",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
-  "description": "Celestia SMP launcher for Windows",
-  "author": "Celestia SMP",
+  "description": "Usagi SMP launcher for Windows",
+  "author": "Usagi SMP",
   "license": "UNLICENSED",
   "type": "module",
   "overrides": {

@@ -15,7 +15,7 @@ app.setName('Usagi');
 app.setAppUserModelId('smp.celestia.launcher');
 const testRoot=!app.isPackaged?process.env.USAGI_TEST_DATA||process.env.CELESTIA_TEST_DATA:undefined;
 const dataRoot=process.env.USAGI_DATA_DIR||process.env.CELESTIA_DATA_DIR||testRoot;
-if(dataRoot && (!path.isAbsolute(dataRoot) || [path.join(os.homedir(),'AppData/Roaming/PrismLauncher'),path.join(os.homedir(),'Documents/RobloxProject')].some(root=>inside(root.toLowerCase(),dataRoot.toLowerCase()) || inside(dataRoot.toLowerCase(),root.toLowerCase()))))throw new Error('Choose an absolute, dedicated Celestia data folder outside Prism and SMP development files.');
+if(dataRoot && (!path.isAbsolute(dataRoot) || [path.join(os.homedir(),'AppData/Roaming/PrismLauncher'),path.join(os.homedir(),'Documents/RobloxProject')].some(root=>inside(root.toLowerCase(),dataRoot.toLowerCase()) || inside(dataRoot.toLowerCase(),root.toLowerCase()))))throw new Error('Choose an absolute, dedicated Usagi data folder outside Prism and SMP development files.');
 app.setPath('userData',dataRoot || path.join(app.getPath('appData'),'CelestiaLauncher'));
 protocol.registerSchemesAsPrivileged([{scheme:'celestia',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:false}}]);
 app.enableSandbox();

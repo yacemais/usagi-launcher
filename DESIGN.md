@@ -10,6 +10,8 @@ with the owner's emblem. Body typography is Inter. No display serif, invented sc
 moon/orbit illustrations, decorative statistics or fabricated news/status.
 
 Navigation is Home, Social, News, Updates and Settings. Account sits in the title bar.
+Visible launcher and community branding is Usagi / Usagi SMP. Legacy Celestia
+storage and protocol identifiers are retained for compatibility and are not UI copy.
 Updates separates the game from the application. Use clear headings, generous space,
 readable 12–13px control text and visible keyboard focus. At 960×620, main content
 scrolls while navigation/title bar stay usable. Respect reduced motion.

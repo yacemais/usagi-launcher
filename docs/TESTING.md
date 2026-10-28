@@ -1,5 +1,20 @@
 # Usagi test report
 
+## 0.3.2 branding update
+
+Compilation and all 110 existing regression tests passed after replacing visible
+Celestia branding with Usagi / Usagi SMP. Actual Electron navigation checks assert
+the Usagi SMP Home heading and absence of Celestia text on Home, Social, News,
+Updates and Settings. The Social GUI test verified the Usagi SMP playing label and
+message round trip against the real local service with explicit test identities.
+An initial ambiguous assertion matched both friend-row and conversation labels;
+scoping it to the conversation resolved the test harness error and the rerun passed.
+The actual packaged 0.3.2 executable passed the same Home branding assertions,
+navigation, isolated-profile, sandbox and Windows credential-protection checks.
+Windows NSIS and unpacked builds completed successfully; the installer remains
+unsigned and was not executed. All 75 files in the unpacked ZIP match the tested build.
+No production authentication or live server test was performed for this text change.
+
 ## 0.3.1 startup timing fix
 
 The 0.3.0 duration check established that the splash appeared, but did not measure

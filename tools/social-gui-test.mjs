@@ -17,6 +17,8 @@ const application=await electron.launch({args:[path.resolve('.scratch-runtime/so
 try{
   const page=await application.firstWindow();await page.getByRole('button',{name:'Social',exact:true}).click();
   await page.getByRole('button').filter({hasText:'TestBeta'}).click();
+  await expect(page.getByRole('region',{name:'Private conversation',exact:true}).getByText('Playing on Usagi SMP',{exact:true})).toBeVisible();
+  await expect(page.getByText(/celestia/i)).toHaveCount(0);
   await expect(page.getByText('Test delivery from the server protocol.',{exact:true})).toBeVisible();
   await page.getByLabel('Private message',{exact:true}).fill('A test reply from the launcher UI.');await page.getByRole('button',{name:'Send private message'}).click();await expect(page.getByText('A test reply from the launcher UI.',{exact:true})).toBeVisible();
   expect(service.store.rows('SELECT text FROM messages WHERE sender=?',alpha)[0].text).toBe('A test reply from the launcher UI.');
