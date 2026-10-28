@@ -17,7 +17,16 @@ reviewed commit 9cee394 was pushed and Pages enabled. Hosted Pages run
 owner wordmark; the unpublished stable update channel correctly returned 404.
 Initial hosted Windows run 40717548285 passed its audit and 90 tests and produced
 the installer, then failed at electron-builder's implicit publishing step. Both
-packaging scripts now explicitly disable publishing; the corrected run is pending.
+packaging scripts now explicitly disable publishing. Corrected Windows run
+40719183976 at commit 862ccc6 passed all steps: publication audit, 90 tests, TypeScript
+and renderer/main compilation, NSIS installer creation and artifact upload. Updated
+Pages run 40719183232 also succeeded. The Windows development artifact was downloaded
+from GitHub for local verification; it is not a published release. Its app payload
+was extracted into an isolated project folder without running the installer, then
+the actual GitHub-built Usagi.exe passed the production startup smoke test:
+version 0.2.1, local production protocol, navigation, correct INSTALL state,
+sandbox enabled, Windows credential protection available, and no renderer errors.
+Interactive installer execution and installed-to-installed updates remain untested.
 No GitHub release or signing-secret upload has occurred.
 Raw protocol/machine JSON and private signing keys are excluded from publication.
 

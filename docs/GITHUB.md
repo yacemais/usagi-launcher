@@ -36,7 +36,10 @@ Official action releases are pinned to verified full commit IDs. The initial hos
 Pages build/deployment succeeded. The initial Windows run passed the publication
 audit and 90 tests and built the installer, then failed when electron-builder tried
 implicit CI publishing. Packaging scripts now explicitly set --publish never; the
-manual draft-release workflow is the sole release writer. See TESTING.md for results.
+manual draft-release workflow is the sole release writer. Corrected Windows run
+40719183976 passed and uploaded the installer artifact; updated Pages run 40719183232
+also succeeded. The downloaded installer's extracted application passed the local
+production startup smoke test. See TESTING.md for results.
 An installed-to-installed upgrade still requires a real release test.
 
 ## Deployment URLs
