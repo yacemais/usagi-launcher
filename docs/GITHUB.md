@@ -1,12 +1,14 @@
-# GitHub hosting preparation
+# GitHub hosting
 
-Repository: https://github.com/yacemais/usagi-launcher (public, empty when inspected).
-No first push, release, Pages setting change or signing-secret upload is authorized
-without the owner's review/approval. The files below are prepared locally.
+Repository: https://github.com/yacemais/usagi-launcher. The owner approved the first
+source push and Pages setup. Reviewed commit 9cee394 was pushed to main; Pages is
+enabled with GitHub Actions as its source. No release or signing-secret upload has
+been approved or performed; those require separate owner review.
 
 ## Authentication
 
-GitHub CLI and Git Credential Manager initially had no authenticated account. The
+GitHub CLI was authenticated as yacemais and repository ADMIN access was verified.
+For future development environments, the
 official checksum-verified GitHub CLI is available in the ignored local directory:
 
 ```powershell
@@ -30,11 +32,14 @@ for repository access, but large release assets use the CLI workflow.
   Only the deployment job receives pages/id-token write permissions. It verifies
   signed channel metadata against the embedded public key before deployment.
 
-Official action releases are pinned to the verified full commit IDs. GitHub Actions
-has not run yet because nothing has been pushed. Local tests do not substitute for
-a real hosted Windows build or installed-to-installed upgrade.
+Official action releases are pinned to verified full commit IDs. The initial hosted
+Pages build/deployment succeeded. The initial Windows run passed the publication
+audit and 90 tests and built the installer, then failed when electron-builder tried
+implicit CI publishing. Packaging scripts now explicitly set --publish never; the
+manual draft-release workflow is the sole release writer. See TESTING.md for results.
+An installed-to-installed upgrade still requires a real release test.
 
-## Target URLs, not yet deployed
+## Deployment URLs
 
 ```text
 https://yacemais.github.io/usagi-launcher/
@@ -43,14 +48,15 @@ https://yacemais.github.io/usagi-launcher/news/index.json
 https://github.com/yacemais/usagi-launcher/releases
 ```
 
-The launcher public config points at these target feeds. Until Pages and the first
-release are published, a missing-feed error is expected. The first Pages deployment
-has no launcher channel if there is no published release; no download is fabricated.
+The site, news JSON and owner wordmark were verified over HTTPS with status 200.
+The launcher public config points at these feeds. There is no published release,
+so launcher/channels/stable.json correctly returns 404 rather than a fabricated
+download. The release workflow must be completed before launcher updates are available.
 OAuth redirects to **http://localhost**, never to GitHub Pages.
 
 ## One-time owner setup after approving publication
 
-Enable repository Actions and select **Settings > Pages > Source: GitHub Actions**.
+Repository Actions and **Settings > Pages > Source: GitHub Actions** are enabled.
 The prepared application signing key is local/ignored. Back it up privately. Its
 public key is embedded in config/usagi.json; the private key is never staged.
 To let trusted manual release builds sign metadata, put the matching private PEM
@@ -63,8 +69,8 @@ Windows installers are development/unsigned even though their update feeds are s
 
 ## First release sequence
 
-1. Review the staged source and publication audit. Approve the first push/Pages setup.
-2. Authenticate GitHub and push main only after that approval. Check Windows CI/Pages.
+1. Completed: owner approved the source push/Pages setup after publication review.
+2. Completed: authenticated, pushed main and enabled Pages. Check Windows CI results.
 3. Approve signing-secret setup and the first draft release, then dispatch the manual
    workflow. It creates Usagi-Setup-version.exe, SHA256SUMS.txt and usagi-stable.json
    (or beta), all under a draft. Private key material is removed from runner temp.

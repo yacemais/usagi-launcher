@@ -5,7 +5,8 @@
   accounts, and an authenticated Minecraft game launch have not been executed.
   Mocked service tests cover orchestration and entitlement rejection; they are not a
   successful Microsoft sign-in. Windows credential protection was tested separately.
-- The GitHub launcher-update and news URLs are configured but not deployed. The
+- The GitHub site/news endpoints are deployed, but there is no published launcher
+  release or live signed update channel yet. The
   application-update verification key is bundled; its private key stays local until
   separately approved secret-store setup. No production modpack manifest, modpack
   verification key or game-server address is configured. There is no invented news,

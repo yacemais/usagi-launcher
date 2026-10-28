@@ -21,9 +21,10 @@ compact account/navigation layout. No AI-generated imagery or branding is used.
   verified installer download/cache, cancellation and an explicit NSIS restart/install
   handoff. The real cache/download path is tested with explicit fixtures. Installing
   a newer release over an installed launcher still needs an end-to-end deployment test.
-- GitHub hosting is prepared for yacemais/usagi-launcher. Its Pages/release feeds are
-  not deployed yet; the first push/release requires the owner's approval. A local
-  private signing key stays ignored, with its public key bundled. No Authenticode
+- Reviewed source and GitHub Pages are published for yacemais/usagi-launcher after
+  owner approval. The news/site endpoints work; the first signed launcher release
+  and update feed still await separate approval. A local private signing key stays
+  ignored, with its public key bundled. No Authenticode
   certificate, approved modpack source or game server has been configured.
 
 ## Development

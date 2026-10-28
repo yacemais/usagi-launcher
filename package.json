@@ -18,8 +18,8 @@
     "start": "electron .",
     "test": "vitest run",
     "test:gui": "node tools/gui-test.mjs",
-    "package:dir": "npm run build && electron-builder --win --x64 --dir",
-    "package:win": "npm run build && electron-builder --win nsis --x64"
+    "package:dir": "npm run build && electron-builder --win --x64 --dir --publish never",
+    "package:win": "npm run build && electron-builder --win nsis --x64 --publish never"
   },
   "build": {
     "appId": "smp.celestia.launcher",

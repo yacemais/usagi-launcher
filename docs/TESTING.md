@@ -10,9 +10,15 @@ live Microsoft metadata, S256 PKCE, the temporary localhost redirect, and scopes
 XboxLive.signin, offline_access, openid and profile. It used no secret and deliberately
 stopped before browser consent; no real account was authenticated by that probe.
 
-A local Pages preview was built against the actual empty public repository, correctly
-producing no invented signed update channel. No hosted Actions run, Pages deployment,
-first push or GitHub release has occurred. These require the owner's approval.
+A local Pages preview was built against the initially empty public repository,
+correctly producing no invented signed update channel. After owner approval,
+reviewed commit 9cee394 was pushed and Pages enabled. Hosted Pages run
+40717548218 succeeded. HTTPS checks returned 200 for the site, news/index.json and
+owner wordmark; the unpublished stable update channel correctly returned 404.
+Initial hosted Windows run 40717548285 passed its audit and 90 tests and produced
+the installer, then failed at electron-builder's implicit publishing step. Both
+packaging scripts now explicitly disable publishing; the corrected run is pending.
+No GitHub release or signing-secret upload has occurred.
 Raw protocol/machine JSON and private signing keys are excluded from publication.
 
 The rebuilt Windows NSIS candidate is at release/candidate-0.2.1/Usagi-Setup-0.2.1.exe.

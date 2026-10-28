@@ -1,13 +1,13 @@
 # Exact hosting layout for Usagi
 
 Current owner choice: **https://github.com/yacemais/usagi-launcher**. GitHub Releases
-and Pages workflows are now prepared; see GITHUB.md. No first push or release has
-been approved or performed.
+and Pages workflows are installed; see GITHUB.md. The first source push and Pages
+deployment were approved and completed. No release has been published.
 
 Selected setup: **GitHub Releases for launcher installers** and **GitHub Pages for
 signed update feeds, news JSON, changelog and the public website**. Bulk modpack
 artifacts can use immutable GitHub Release assets when redistribution is permitted;
-R2 is an optional alternative for larger packs. No deployment has occurred.
+R2 is an optional alternative for larger packs. The small Pages site is live.
 
 ## 1. Launcher binaries: GitHub Releases
 
@@ -147,5 +147,6 @@ personal paths, application data, the live Prism instance, user worlds/screensho
 and server-only/private configuration. `config/usagi.json` contains public build
 coordinates only and is bundled into the application, not used as a remote trust source.
 
-No publication or live server change has been performed. Run the deployment and
-real-account validation checklist in TESTING.md before claiming a public release works.
+The reviewed source and Pages site are published. No release or live Minecraft
+server change has been performed. Run the release and real-account validation
+checklist in TESTING.md before claiming the launcher is production ready.
