@@ -1,10 +1,11 @@
 # Known limitations
 
-- The registered Usagi public client ID is now integrated, but real login,
-  token refresh, logout against Microsoft, account switching against multiple real
-  accounts, and an authenticated Minecraft game launch have not been executed.
-  Mocked service tests cover orchestration and entitlement rejection; they are not a
-  successful Microsoft sign-in. Windows credential protection was tested separately.
+- Real Microsoft browser OAuth, Xbox Live and XSTS passed, but Minecraft Services
+  rejects Usagi's client ID with HTTP 403, Invalid app registration. Minecraft API
+  application access must be approved before real Java entitlement/profile retrieval,
+  saved-account refresh/logout, account switching or authenticated game launch can
+  be verified. Windows credential protection was tested separately. Unit fixtures
+  cover orchestration and entitlement rejection; they do not bypass this live denial.
 - The GitHub site/news endpoints are deployed, but there is no published launcher
   release or live signed update channel yet. The
   application-update verification key is bundled; its private key stays local until

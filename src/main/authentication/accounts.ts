@@ -6,13 +6,11 @@ import type { Profile, Snapshot } from '../../shared/types';
 import { atomicWrite, exists } from '../security/files';
 import { Logger } from '../logging/logger';
 import { browserLogin,scopes } from './browser';
+import { MinecraftAuthError } from './errors';
 export interface Protection {available():boolean|Promise<boolean>;encrypt(value:string):Buffer|Promise<Buffer>;decrypt(value:Buffer):string|Promise<string>}
 export interface MinecraftSession { profile:Profile; token:string }
 export class OwnershipError extends Error {
   constructor() { super('This account does not own Minecraft Java. Sign in with an account that owns the Java Edition.'); }
-}
-class MinecraftAuthError extends Error {
-  constructor(step:string){super(step+' failed. Check Xbox account setup, family permissions, network access and the application’s Minecraft API approval.');}
 }
 class CredentialProtectionError extends Error{constructor(){super('Windows credential protection is unavailable. Sign-in cannot be saved securely.');}}
 export class Accounts {
@@ -71,7 +69,7 @@ export class Accounts {
     const session=await this.minecraft(result);const profiles=this.profiles.map(p=>p.accountId===session.profile.accountId?session.profile:p);await this.save(this.client,profiles);this.profiles=profiles;return session;
   }
   private async minecraft(result:AuthenticationResult,signal:AbortSignal=AbortSignal.timeout(45000),serial?:number):Promise<MinecraftSession> {
-    const step=async <T>(label:string,work:()=>Promise<T>)=>{if(serial===this.serial){this.stage=label;this.changed();}try{return await work();}catch{signal.throwIfAborted();throw new MinecraftAuthError(label);}};
+    const step=async <T>(label:string,work:()=>Promise<T>)=>{if(serial===this.serial){this.stage=label;this.changed();}try{const result=await work();this.log.write(label+': completed.','authentication.log');return result;}catch(error){signal.throwIfAborted();const failure=new MinecraftAuthError(label,error);this.log.write(failure.message,'authentication.log');throw failure;}};
     this.log.secret(result.accessToken);
     const auth=new MicrosoftAuthenticator(); const xbl=await step('Signing in to Xbox Live',()=>auth.authenticateXboxLive(result.accessToken,signal)); this.log.secret(xbl.Token);
     const xsts=await step('Authorizing Minecraft with Xbox',()=>auth.authorizeXboxLive(xbl.Token,'rp://api.minecraftservices.com/',signal)); this.log.secret(xsts.Token);

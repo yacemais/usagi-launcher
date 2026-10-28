@@ -58,6 +58,10 @@ data folder are not being modified by an adversarial same-user process during up
 ## Release trust
 
 The development installer is unsigned; no publisher certificate was supplied. Application self-updates use a separate Ed25519-signed feed and NSIS handoff, with optional pinned Authenticode publisher verification. See LAUNCHER_UPDATES.md. Public-key rotation remains a trusted manual/release operation.
-No production endpoints, private keys, credentials or reference modpack binaries are
-bundled. This build needs real account/game/server validation and independent security
-review before a public production release. Dependency audit results are in TESTING.md.
+Public feed endpoints, the public Microsoft client ID and verification keys are
+bundled. Private keys, credentials and reference modpack binaries are excluded.
+Auth failures retain numeric HTTP/Xbox codes and recognized error categories;
+raw provider response bodies and SDK exception messages are never logged. Real
+Microsoft/Xbox/XSTS login passed, but Minecraft rejects Usagi's API registration.
+Full game/server validation and independent security review remain necessary before
+a production release. Dependency audit results are in TESTING.md.

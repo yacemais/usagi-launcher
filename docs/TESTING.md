@@ -1,5 +1,41 @@
 # Usagi test report
 
+## Live Microsoft authentication verification, 28 October 2026
+
+After the owner registered http://localhost as a native/desktop redirect, live public
+Microsoft authorization checks accepted portless and ephemeral-port localhost URIs.
+The real MSAL protocol check passed authorization-code/S256 PKCE parameters for the
+bundled Usagi client ID. Usagi supplies random state and nonce and reuses the same
+redirect URI during the one-use code exchange.
+
+Two actual launcher sign-in attempts used the owner's manual system-browser login,
+first in the GitHub-built app, then in the compiled source app with safer diagnostics.
+No mock authentication, borrowed client ID or client secret was used.
+
+| Live step | Result |
+| --- | --- |
+| Microsoft browser login and code/PKCE exchange | Passed |
+| Xbox Live authentication | Passed |
+| XSTS authorization for Minecraft | Passed |
+| Minecraft Services login_with_xbox | Failed: HTTP 403, Invalid app registration |
+| Minecraft Java entitlement | Not reached |
+| Minecraft profile retrieval | Not reached |
+| Real saved-account refresh/logout | Not reached; no account was saved |
+
+The failure exposed a diagnostic defect: the wrapper discarded the provider status
+and registration denial. It now preserves only numeric HTTP/Xbox codes and recognized
+error categories, logs completed service steps, and never logs raw provider payloads.
+Compilation and **95 tests in 11 files** passed, including five new diagnostic/privacy
+tests. Those unit fixtures are separate from the real-service attempts above.
+An actual full sign-in cannot pass until Minecraft approves Usagi's API access.
+The updated local Windows installer built successfully at
+release/auth-check-0.2.1/Usagi-Setup-0.2.1.exe. Its packaged application passed the
+startup/navigation/sandbox/Windows credential-protection smoke check. It remains
+unsigned and is not a GitHub release. The local source archive includes this change;
+no account cache, live auth logs or private signing key is included in source.
+
+The sections below retain the earlier build/UI results and their test counts.
+
 ## Current 0.2.1 OAuth and GitHub preparation
 
 The registered client ID ee966e53-e97c-46eb-b6ea-6de2cca23fd5 is integrated. The

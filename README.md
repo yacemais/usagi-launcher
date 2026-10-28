@@ -16,7 +16,9 @@ compact account/navigation layout. No AI-generated imagery or branding is used.
   nonce validation, followed by Xbox/XSTS, Minecraft entitlement and profile checks.
   Device-code fallback, cancellation, refresh and Windows-encrypted persistence exist.
   The owner registration **ee966e53-e97c-46eb-b6ea-6de2cca23fd5** is integrated.
-  **A real Microsoft account has not yet completed end-to-end testing.**
+  Real Microsoft browser login, Xbox Live and XSTS passed. **Minecraft Services
+  blocks Usagi with HTTP 403, Invalid app registration**; Java entitlement/profile
+  verification and full saved-account testing require Minecraft API access approval.
 - Launcher updates now have a separate owner-signed release feed, stable/beta channels,
   verified installer download/cache, cancellation and an explicit NSIS restart/install
   handoff. The real cache/download path is tested with explicit fixtures. Installing

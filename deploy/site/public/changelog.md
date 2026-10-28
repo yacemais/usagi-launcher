@@ -5,9 +5,13 @@
 - Integrated the owner's registered Microsoft public application ID.
 - Tightened the single-use localhost PKCE callback and account-change locking.
 - Prepared Windows build, draft-release and signed GitHub Pages feed workflows.
+- Added private-data-safe HTTP/Xbox error diagnostics and completed-step auth logs.
 
-Real personal-account sign-in, hosted Actions builds and an installed-to-installed
-upgrade remain pending. Nothing is pushed or released without the owner's approval.
+Source and Pages are published with owner approval, and the hosted Windows build
+passed. Real Microsoft browser OAuth, Xbox Live and XSTS passed. Minecraft Services
+returns HTTP 403, Invalid app registration; full Java sign-in requires application
+API access approval. An installed-to-installed upgrade remains untested. No launcher
+release has been published.
 
 ## 0.2.0
 

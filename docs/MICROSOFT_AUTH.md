@@ -1,8 +1,10 @@
 # Microsoft sign-in: implementation and owner setup
 
 The owner registered Usagi with client ID **ee966e53-e97c-46eb-b6ea-6de2cca23fd5**.
-It is now bundled in config/usagi.json. Real Microsoft,
-Xbox and Minecraft end-to-end sign-in is still **not tested or claimed working**.
+It is now bundled in config/usagi.json. Real Microsoft browser sign-in, Xbox Live
+and XSTS passed with the owner completing sign-in. Minecraft Services then rejected
+the application with HTTP 403, **Invalid app registration**. Full Minecraft sign-in
+is blocked by application access and is not claimed working.
 The callback protocol, ownership rejection, cancellation, protected persistence,
 refresh orchestration and logout are exercised with explicit service fixtures.
 
@@ -54,10 +56,29 @@ Microsoft registration and loopback references:
 - https://learn.microsoft.com/en-us/entra/msal/javascript/node/acquire-token-requests
 - https://github.com/MicrosoftDocs/entra-docs/blob/main/docs/identity-platform/quickstart-desktop-app-sign-in.md
 
-The historical Minecraft API-access support URL
-https://help.minecraft.net/hc/en-us/articles/16254801392141 returned no substantive
-article text when inspected. A current approval form/process could not be verified
-from primary documentation; approval is not promised by these setup steps.
+Minecraft Services explicitly returned Invalid app registration for Usagi during
+the real test. The response's official information link, https://aka.ms/AppRegInfo,
+currently redirects to help.minecraft.net. The application-review link
+https://aka.ms/mce-reviewappid currently redirects to Microsoft's Forms service.
+The form's full contents, acceptance status and review timeline were not verified.
+Submit/request review for Usagi's own client ID using the official process; approval
+is not promised by creating an Entra registration or changing OAuth scopes.
+Do not substitute another launcher's client ID. Once access is granted, rerun the
+real ownership/profile checks and the persistence, refresh and logout test sequence.
+
+For an application access request, use these nonsecret facts:
+- Application: Usagi Launcher; Windows desktop/public client, no client secret.
+- Client ID: ee966e53-e97c-46eb-b6ea-6de2cca23fd5.
+- Source/site: https://github.com/yacemais/usagi-launcher and
+  https://yacemais.github.io/usagi-launcher/.
+- Flow: system browser, authorization code with S256 PKCE, Xbox Live, XSTS,
+  Minecraft Java entitlement/profile checks.
+- Observed denial: POST /authentication/login_with_xbox, HTTP 403,
+  Invalid app registration, after successful Microsoft/Xbox/XSTS authentication.
+- Reproduction timestamp: 2026-10-28 16:24:34 UTC.
+
+No support request or review form was submitted by the development tools. Never
+include passwords, OAuth codes/tokens, Xbox/XSTS tokens or protected account files.
 
 ## Implemented flow
 
@@ -79,6 +100,16 @@ account. MSAL caches and profile metadata use Windows safeStorage/DPAPI. Minecra
 access tokens stay in main-process memory; logs redact registered secrets.
 
 ## Required real-account test
+
+On 28 October 2026, the real public authorization endpoint accepted both portless
+localhost and ephemeral-port localhost redirects after the owner saved the desktop
+redirect. A real system-browser login then completed the code/PKCE exchange, Xbox
+Live authentication and XSTS authorization. The next endpoint,
+api.minecraftservices.com/authentication/login_with_xbox, returned HTTP 403 with
+Invalid app registration. The follow-up run reproduced the same denial using the
+improved status/code diagnostics. No token exchange was mocked and no client secret
+was used. No account was published or saved after the rejected Minecraft exchange.
+Ownership, profile, real saved-account refresh and logout remain untested.
 
 After registration/API access is ready: sign in with a consenting Java owner, restart
 Usagi, refresh and launch, sign out, restart and confirm the account is gone. Also
