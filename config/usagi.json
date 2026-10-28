@@ -1,0 +1,19 @@
+{
+    "microsoftClientId":  "ee966e53-e97c-46eb-b6ea-6de2cca23fd5",
+    "modpack":  {
+                    "manifestUrl":  "",
+                    "publicKey":  ""
+                },
+    "newsUrl":  "https://yacemais.github.io/usagi-launcher/news/index.json",
+    "server":  {
+                   "host":  "",
+                   "port":  25565
+               },
+    "launcherUpdates":  {
+                            "baseUrl":  "https://yacemais.github.io/usagi-launcher/launcher/channels/",
+                            "publicKey":  "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAiLCyEskVt6DQaTc67G0TkAlV6zPNOGQnuqwmblQHp8M=\n-----END PUBLIC KEY-----\n",
+                            "publisherNames":  [
+
+                                               ]
+                        }
+}

@@ -1,0 +1,117 @@
+# Usagi test report
+
+## Current 0.2.1 OAuth and GitHub preparation
+
+The registered client ID ee966e53-e97c-46eb-b6ea-6de2cca23fd5 is integrated. The
+expanded local suite passed **90 tests in 10 files**, including callback replay,
+logout serialization, signed GitHub feed selection and workflow permission checks.
+The real MSAL protocol probe generated a system-browser authorization-code URL using
+live Microsoft metadata, S256 PKCE, the temporary localhost redirect, and scopes
+XboxLive.signin, offline_access, openid and profile. It used no secret and deliberately
+stopped before browser consent; no real account was authenticated by that probe.
+
+A local Pages preview was built against the actual empty public repository, correctly
+producing no invented signed update channel. No hosted Actions run, Pages deployment,
+first push or GitHub release has occurred. These require the owner's approval.
+Raw protocol/machine JSON and private signing keys are excluded from publication.
+
+The rebuilt Windows NSIS candidate is at release/candidate-0.2.1/Usagi-Setup-0.2.1.exe.
+Actual Electron GUI checks passed for configured Microsoft sign-in controls, update
+navigation, real owner branding, sandbox/isolation, rejected forged IPC, encrypted
+credential round-trip, minimum window layout and keyboard/window controls. The
+packaged 0.2.1 executable also passed production-protocol startup, navigation,
+INSTALL state with missing game files, Windows credential protection and renderer
+error checks. These checks did not authenticate an account or install an update.
+The installer is not Authenticode signed. Local build success is not a hosted CI run.
+
+The results below describe the preceding 0.2.0 baseline unless explicitly updated.
+
+## Prior 0.2.0 report
+
+Executed on Windows x64, 28 October 2026; Node 24.21.0, Electron 45.1.0, Java 17.0.15
+for the official game installer. Tests use isolated application data. Prism, the
+Shop project and quest files were not modified.
+
+## Baseline and preservation
+
+Before edits, **65 existing tests passed**. Current source/docs/assets/lockfile were
+backed up as release/pre-usagi-backup-20261028-134631.zip. The earlier 0.1.0 installer
+and source archive remain available. The game installer, signed modpack transactions,
+user-data rules and secure Electron boundary were retained.
+
+## Final executed results
+
+| Check | Result |
+| --- | --- |
+| TypeScript + Vite + esbuild, including publishing tools | Passed, no compilation errors |
+| Full Vitest suite | **82 passed, 8 files** |
+| Existing modpack regressions | Passed: signatures, target versions, paths, corruption, missing-file repair, seeds, optional files, backups, managed deletions, ownership, recovery and junction rejection |
+| Browser OAuth helper | Passed with actual local HTTP callback and mocked Microsoft token APIs: state rejection, S256 PKCE, nonce/state passed to exchange, cancellation/listener shutdown, Microsoft-only browser URLs |
+| Account orchestration | Passed with explicit service mocks: entitlement failure, silent refresh checks, logout/restart, unknown account, unavailable storage, failed protected write and cancelled late result |
+| Real Windows credential storage | Passed: asynchronous encrypt/decrypt round trip; legacy-name/synchronous ciphertext readable under Usagi with async storage |
+| Launcher signed release validation | Passed: signature, product/channel, stable prerelease exclusion, expiry, safe installer filename, persisted sequence rollback rejection |
+| Real electron-updater NSIS cache | Passed with real local HTTP and non-executable fixtures: download, cache reuse after service restart, checksum rejection, cancellation/retry, channel selection, pre-install tamper detection and busy-game install rejection |
+| Privileged IPC validation | Passed: forged executable paths/URLs and offline authentication mode rejected |
+| Settings migration | Passed: old settings retain the game folder and width; missing new channel becomes stable |
+| Real child-process exit fixture | Passed: stderr/log capture, exit code 7 and idle recovery; this is not a Minecraft crash test |
+| Real TCP server-list fixture | Passed: actual fixture counts/version, offline port, unconfigured state |
+| Actual Electron UI | Passed: owner wordmark loaded, Usagi title, Home/News/Settings/Account, separate game/app update tabs, unconfigured source boundary, minimum window, keyboard focus and maximize/restore |
+| Sandbox and renderer security | Passed: sandbox=true, contextIsolation=true, nodeIntegration=false, no renderer require/process, forged IPC rejected |
+| Forced Chromium 125% / 150% scaling | Passed: navigation and no horizontal overflow; physical Windows multi-monitor scaling remains untested |
+| Packaged Windows Usagi.exe | Passed from isolated working directory, without Vite: actual name/version, local production protocol, owner branding, navigation and protected storage availability |
+| Packaged game-installer regression | Passed: existing official runtime verified after restart and Forge workflow executed; missing signed pack correctly keeps PLAY disabled |
+| Pack and application release publishers | Passed with explicit test keys/payloads: signed output independently verified, actual hashes checked, changed pack content rejected; no production key generated |
+| NSIS build | Usagi-Setup-0.2.0.exe built successfully, unsigned |
+| Final npm audit | 0 reported vulnerabilities for the final lockfile; docs/audit-results.json |
+
+The initial fresh official Minecraft/Forge/Java download and corrupt-asset restart/
+repair passed in the preceding 0.1.0 work. Usagi's packaged regression reused that
+isolated installed cache and ran the official installation workflow again. It is
+not described as an authenticated Minecraft launch or a fresh modpack installation.
+
+## Not executed
+
+- **Real Microsoft sign-in/logout/refresh and Minecraft entitlement endpoints.** The
+  owner confirmed that no Usagi Microsoft app has been registered. See MICROSOFT_AUTH.md.
+- Authenticated game launch, actual game crash, two real authenticated accounts,
+  production modpack/server connection or auto join. These need the registration,
+  Java accounts, approved pack and server.
+- **A real installed-version-to-newer-installed-version app upgrade.** Signed metadata,
+  download/cache and install gating were exercised; fixture installers were never
+  executed. NSIS quit/install handoff and rollback need a controlled deployment test.
+- Production signed feeds, Authenticode publisher verification with a real certificate,
+  SmartScreen reputation, installer install/uninstall, physical display scaling and
+  physical power-cut durability. No production keys/endpoints/certificate were supplied.
+
+## Known failing compatibility case
+
+Arbitrary Unicode Java paths remain unresolved. The official Java 17 Windows runtime
+failed to start from a folder containing 雪 and lost that character in classpaths on
+this host. Relevant downloaded Java files matched their upstream hashes; the same
+runtime worked from an ASCII path with spaces. Node's Unicode updater filesystem
+tests pass, which does not establish Java bootstrap compatibility. See KNOWN_LIMITATIONS.md.
+
+## Evidence and reproduction
+
+JSON records under docs/: gui-results, scale-results, packaged-results,
+packaged-core-results, credential-migration-results and publisher-results. The older
+install-results/runtime-regression-results describe the original official install.
+Screenshots are real Electron captures; screenshots/README.md identifies current and
+historical images. Root usagi-*-run.log files contain local command output.
+
+```powershell
+npm ci
+node node_modules/electron/install.js
+npm run build
+npm test
+npm run test:gui
+node tools/scale-test.mjs
+node tools/publisher-test.mjs
+npm run package:win
+node tools/packaged-test.mjs
+node tools/packaged-test.mjs --core
+```
+
+The --core test expects the isolated official runtime created by
+tools/install-gui-test.mjs. Never point development test tools at live player data.
+Test-only HTTP transport/service mocks are not exposed through production IPC.

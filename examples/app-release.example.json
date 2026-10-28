@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "product": "usagi",
+  "platform": "win32",
+  "arch": "x64",
+  "channel": "stable",
+  "sequence": 1,
+  "version": "0.2.0",
+  "publishedAt": "2026-10-28T00:00:00.000Z",
+  "expiresAt": "2026-11-28T00:00:00.000Z",
+  "notes": "Usagi development release. Owner branding, browser PKCE sign-in implementation, and separate signed launcher updates. Real account testing is pending registration.",
+  "installer": {"url":"https://releases.example.invalid/usagi/v0.2.0/Usagi-Setup-0.2.0.exe"}
+}

@@ -1,0 +1,21 @@
+import { _electron as electron, expect } from '@playwright/test';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+const root=path.resolve('.scratch-runtime/gui');await fs.mkdir(root,{recursive:true});await fs.mkdir('docs/screenshots',{recursive:true});
+const application=await electron.launch({args:['.'],env:{...process.env,CELESTIA_TEST_DATA:root,CELESTIA_GUI_TEST:'1'}});
+try {
+  const page=await application.firstWindow();const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.waitForSelector('.hero');await page.evaluate(()=>document.fonts.ready);await expect(page.getByRole('button',{name:'INSTALL',exact:true})).toBeEnabled();
+  const prefs=await application.evaluate(({BrowserWindow})=>{const p=BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();return {sandbox:p.sandbox,contextIsolation:p.contextIsolation,nodeIntegration:p.nodeIntegration};});
+  expect(prefs).toEqual({sandbox:true,contextIsolation:true,nodeIntegration:false});expect(await page.evaluate(()=>({require:typeof window.require,process:typeof window.process}))).toEqual({require:'undefined',process:'undefined'});
+  const bad=await page.evaluate(()=>window.celestia.request({type:'launch',accessToken:'forged'}));expect(bad.ok).toBe(false);
+  const protection=await application.evaluate(async({safeStorage})=>{const available=await safeStorage.isAsyncEncryptionAvailable();return {available,roundtrip:available?(await safeStorage.decryptStringAsync(await safeStorage.encryptStringAsync('local-probe'))).result==='local-probe':false};});expect(protection).toEqual({available:true,roundtrip:true});
+  expect(await page.title()).toBe('Usagi');await expect(page.getByRole('img',{name:'Usagi',exact:true})).toBeVisible();expect(await page.getByRole('img',{name:'Usagi',exact:true}).evaluate(img=>img.naturalWidth)).toBe(720);
+  await page.screenshot({path:'docs/screenshots/home-1200.png'});
+  for(const [label,file,heading] of [['News','news','News'],['Updates','updates','Updates'],['Settings','settings','Settings']]){await page.getByRole('button',{name:label,exact:true}).click();await expect(page.getByRole('heading',{name:heading,exact:true})).toBeVisible();await page.screenshot({path:`docs/screenshots/${file}-1200.png`});}
+  await page.getByRole('button',{name:'Updates',exact:true}).click();await page.getByRole('tab',{name:'Usagi launcher'}).click();await expect(page.getByRole('button',{name:'Check Usagi updates'})).toBeEnabled({timeout:45000});await expect(page.getByLabel('Launcher release channel')).toHaveValue('stable');await page.screenshot({path:'docs/screenshots/usagi-launcher-updates.png'});
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('heading',{name:'Minecraft account',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Sign in with Microsoft',exact:true})).toBeEnabled();await expect(page.getByRole('heading',{name:'Microsoft registration required'})).toHaveCount(0);await page.screenshot({path:'docs/screenshots/account-1200.png'});
+  await application.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(960,620));await page.getByRole('button',{name:'Home',exact:true}).click();await expect.poll(()=>page.evaluate(()=>Math.round(document.querySelector('.sidebar-bottom').getBoundingClientRect().bottom)<=innerHeight)).toBe(true);await page.screenshot({path:'docs/screenshots/home-960.png'});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.keyboard.press('Tab');expect(await page.evaluate(()=>document.activeElement?.tagName)).toBe('BUTTON');
+  await page.getByRole('button',{name:'Maximize window'}).click();await expect(page.getByRole('button',{name:'Restore window'})).toBeVisible();await page.getByRole('button',{name:'Restore window'}).click();
+  expect(errors).toEqual([]);await fs.writeFile('docs/gui-results.json',JSON.stringify({security:prefs,credentialProtection:protection,checks:['actual Home INSTALL state','all navigation pages','account configuration boundary','forged IPC rejected','960x620 layout','keyboard focus','maximize/restore'],errors},null,2));console.log('GUI CHECKS PASSED');
+}finally{await application.close();}

@@ -1,0 +1,11 @@
+{
+  "items": [
+    {
+      "id": "schema-example-not-production-news",
+      "title": "EXAMPLE: replace with an owner announcement",
+      "date": "2026-10-28T00:00:00.000Z",
+      "summary": "Schema example only. This file is not configured as a live news feed.",
+      "content": "Publish your own announcement text and optional licensed image."
+    }
+  ]
+}

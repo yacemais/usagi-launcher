@@ -1,0 +1,12 @@
+import { build } from 'esbuild';
+import { xmclAliases } from './xmcl-aliases.mjs';
+import './collect-notices.mjs';
+import { execFileSync } from 'node:child_process';
+await build({entryPoints:['tools/validate-product.ts'],outfile:'dist/tools/validate-product.cjs',bundle:true,platform:'node',format:'cjs',target:'node24'});
+execFileSync(process.execPath,['dist/tools/validate-product.cjs'],{stdio:'inherit',shell:false,windowsHide:true});
+await build({ entryPoints:['src/main/index.ts'], outfile:'dist/main/index.cjs', bundle:true, platform:'node', format:'cjs', target:'node24', external:['electron'], alias:xmclAliases, sourcemap:true });
+await build({ entryPoints:['src/preload/index.ts'], outfile:'dist/preload/index.cjs', bundle:true, platform:'node', format:'cjs', target:'node24', external:['electron'] });
+await build({ entryPoints:['tools/publish-manifest.ts'], outfile:'dist/tools/publish-manifest.cjs', bundle:true, platform:'node', format:'cjs', target:'node24' });
+await build({ entryPoints:['tools/publish-app-release.ts'], outfile:'dist/tools/publish-app-release.cjs', bundle:true, platform:'node', format:'cjs', target:'node24' });
+await build({ entryPoints:['tools/github-pages.ts'], outfile:'dist/tools/github-pages.cjs', bundle:true, platform:'node', format:'cjs', target:'node24' });
+await build({ entryPoints:['tools/oauth-protocol-probe.ts'], outfile:'dist/tools/oauth-protocol-probe.cjs', bundle:true, platform:'node', format:'cjs', target:'node24' });

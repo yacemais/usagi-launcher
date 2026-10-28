@@ -1,0 +1,10 @@
+import type { ReactNode } from 'react';
+import { AlertCircle, ArrowUpRight, RefreshCw } from 'lucide-react';
+import type { Command, Response, Snapshot } from '../../shared/types';
+export type Request=(command:Command)=>Promise<Response>;
+export function bytes(n:number) {if(!Number.isFinite(n) || n<=0)return '0 B';const unit=Math.min(3,Math.floor(Math.log(n)/Math.log(1024)));return (n/1024**unit).toFixed(unit?1:0)+' '+['B','KB','MB','GB'][unit];}
+export function Empty({icon,heading,children,action}:{icon:ReactNode;heading:string;children:ReactNode;action?:ReactNode}) {return <section className="empty-state"><span className="empty-symbol">{icon}</span><h2>{heading}</h2><p>{children}</p>{action}</section>;}
+export function ErrorBanner({message,onClose}:{message:string;onClose?:()=>void}) {return <div className="error-banner" role="alert"><AlertCircle size={17}/><span>{message}</span>{onClose&&<button aria-label="Dismiss error" onClick={onClose}>×</button>}</div>;}
+export function PageHeader({eyebrow,title,description,action}:{eyebrow:string;title:string;description:string;action?:ReactNode}) {return <header className="page-heading"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{description}</p></div>{action}</header>;}
+export function ExternalLink({url,request,children}:{url:string;request:Request;children:ReactNode}) {return <button className="text-button" onClick={()=>void request({type:'external.open',url})}>{children}<ArrowUpRight size={15}/></button>;}
+export function ServerLine({state,request}:{state:Snapshot;request:Request}) {const s=state.server;return <div className="server-line"><span className={'status-dot '+s.state}/><span>{s.state==='unconfigured'?'Server not configured':s.state==='checking'?'Checking server…':s.state==='online'?'Server online':'Server unavailable'}</span>{s.state==='online'&&<strong>{s.online} / {s.max} players</strong>}<button className="icon-button" aria-label="Refresh server status" disabled={s.state==='checking'} onClick={()=>void request({type:'server.refresh'})}><RefreshCw size={14}/></button></div>;}

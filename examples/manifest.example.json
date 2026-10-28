@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "sequence": 1,
+  "version": "EXAMPLE-REPLACE-BEFORE-PUBLISHING",
+  "minecraft": "1.20.1",
+  "forge": "47.4.28",
+  "java": 17,
+  "publishedAt": "2026-10-28T00:00:00.000Z",
+  "expiresAt": "2026-11-28T00:00:00.000Z",
+  "files": [
+    {
+      "path": "mods/owner-approved-example.jar",
+      "size": 12345,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "url": "https://downloads.example.invalid/releases/example/owner-approved-example.jar",
+      "policy": "managed",
+      "optional": false
+    },
+    {
+      "path": "config/example.json",
+      "size": 3,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "url": "https://downloads.example.invalid/releases/example/config.json",
+      "policy": "seed",
+      "optional": false
+    }
+  ]
+}

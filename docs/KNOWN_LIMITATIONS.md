@@ -1,0 +1,35 @@
+# Known limitations
+
+- The registered Usagi public client ID is now integrated, but real login,
+  token refresh, logout against Microsoft, account switching against multiple real
+  accounts, and an authenticated Minecraft game launch have not been executed.
+  Mocked service tests cover orchestration and entitlement rejection; they are not a
+  successful Microsoft sign-in. Windows credential protection was tested separately.
+- The GitHub launcher-update and news URLs are configured but not deployed. The
+  application-update verification key is bundled; its private key stays local until
+  separately approved secret-store setup. No production modpack manifest, modpack
+  verification key or game-server address is configured. There is no invented news,
+  simulated online status, bundled pack, or redistribution-permission audit.
+- Windows Java 17 on this host cannot start from a path containing the character 雪
+  and loses this character in command-line classpaths. Official downloaded files
+  were hash-verified and the same runtime worked at an ASCII path. Use an ASCII
+  Java/runtime/game path (spaces work). Node updater filesystem tests support Unicode,
+  but arbitrary Unicode end-to-end Java paths are unresolved. The launcher does not
+  change Windows regional settings or silently map drives. Related upstream notes:
+  https://www.oracle.com/java/technologies/javase/17-0-17-relnotes.html#JDK-8337506
+- Automatic Java currently follows Mojang's Java-17 runtime channel (17.0.15 in the
+  executed install). A current, compatible 64-bit Java 17 may be selected manually.
+  Every vendor/update combination has not been tested.
+- Minecraft server status uses TCP server-list ping with a bounded timeout. SRV record
+  resolution is not implemented; configure the actual host and port. Quick Play auto
+  join is wired but requires an authenticated game/server test.
+- English only. Settings are language-ready; translation catalogs and RTL are absent.
+- Offline cached signed pack verification works; launching still needs a valid
+  refreshed official session. There is no offline account or cracked launch bypass.
+- Installer signing, SmartScreen reputation, physical 4K/125%/150% Windows display
+  scaling, accessibility screen-reader review, live game crashes, and interactive
+  install/uninstall still require independent validation.
+- Backups and interrupted staging remain on disk. No automatic pruning is included. Launcher self-update download/cache logic is tested, but a production installed-version upgrade is pending. Power-cut durability and adversarial same-user filesystem
+  races are not fully addressed; see SECURITY.md.
+- The configured antislop plugin cache and referenced agent-domain docs were absent.
+  The explicit design specification was followed during implementation instead.
