@@ -2,7 +2,11 @@
 
 ## 0.4.0 distribution system
 
-The release suite has 155 passing tests in 18 files on Windows.
+The release suite has 156 passing tests in 18 files on Windows.
+The PowerShell publication fixtures restore native Windows PowerShell module paths
+when launched through Node from PowerShell 7, matching the Windows CI environment.
+GitHub asset enumeration validates slurped pagination, including empty pages, without
+combining incompatible GitHub CLI output flags.
 Tests distinguish feed 404s from installer 404s, retain rollback protection across an
 absent feed, reject real HTTP failures, and allow future published feeds to be found
 without automatic Beta fallback. A missing modpack feed is also informational during

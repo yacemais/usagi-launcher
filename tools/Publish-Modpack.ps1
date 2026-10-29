@@ -41,9 +41,9 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect the draft.' }
   $remote = $remoteJson | ConvertFrom-Json
   if (-not $remote.isDraft) { throw 'Only an unpublished draft may receive assets.' }
-  $remoteAssetsJson = & $Gh api "repos/$($plan.repository)/releases/$($remote.databaseId)/assets" --paginate --slurp --jq 'add'
+  $remoteAssetsJson = & $Gh api "repos/$($plan.repository)/releases/$($remote.databaseId)/assets" --paginate --slurp
   if ($LASTEXITCODE -ne 0) { throw 'Cannot list every draft asset.' }
-  $remoteAssets = $remoteAssetsJson | ConvertFrom-Json
+  $remoteAssets = @(foreach ($page in ($remoteAssetsJson | ConvertFrom-Json)) { foreach ($asset in $page) { $asset } })
   foreach ($remoteAsset in $remoteAssets) {
     if (-not ($plan.assets | Where-Object { $_.name -ceq $remoteAsset.name })) { throw "Draft contains an unreviewed asset: $($remoteAsset.name)" }
   }
@@ -61,9 +61,9 @@ try {
       if ($LASTEXITCODE -ne 0) { throw 'Upload interrupted. The release remains a draft; rerun with -ResumeDraft after review.' }
     }
   }
-  $draftAssets = & $Gh api "repos/$($plan.repository)/releases/$($remote.databaseId)/assets" --paginate --slurp --jq 'add'
+  $draftAssets = & $Gh api "repos/$($plan.repository)/releases/$($remote.databaseId)/assets" --paginate --slurp
   if ($LASTEXITCODE -ne 0) { throw 'Cannot validate the uploaded draft.' }
-  $uploaded = $draftAssets | ConvertFrom-Json
+  $uploaded = @(foreach ($page in ($draftAssets | ConvertFrom-Json)) { foreach ($asset in $page) { $asset } })
   if ($uploaded.Count -ne $plan.assets.Count) { throw 'Uploaded asset count differs from the reviewed release.' }
   foreach ($asset in $plan.assets) {
     $found = $uploaded | Where-Object { $_.name -ceq $asset.name }
