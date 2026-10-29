@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { createPublicKey,verify } from 'node:crypto';
 import semver from 'semver';
 import path from 'node:path';
-import { httpsUrl,secureFetch,limitedBytes } from '../security/network';
+import { httpsUrl,secureFetch,limitedBytes,HttpResponseError } from '../security/network';
 import { atomicWrite,exists,readJson,safePath } from '../security/files';
 import { envelopeSchema } from '../updater/manifest';
 import type { Fetcher } from '../installer/downloads';
@@ -20,12 +20,18 @@ export function verifyAppRelease(envelope:unknown,key:string,channel:'stable'|'b
   return release;
 }
 const trustSchema=z.record(z.string(),z.object({sequence:z.number().int().positive(),payload:z.string()}).strict());
+export class UnpublishedChannelError extends Error {
+  constructor(readonly channel:'stable'|'beta'){super(channel==='stable'?'No stable launcher release has been published yet. Select Beta to check development releases.':'No beta launcher release has been published yet.');this.name='UnpublishedChannelError';}
+}
 export class ReleaseRepository {
   current?:AppRelease;envelope?:unknown;channel:'stable'|'beta'='stable';signal?:AbortSignal;
   constructor(readonly root:string,private baseUrl:string,readonly key:string,readonly fetcher:Fetcher=secureFetch){}
   async check(){
     const u=httpsUrl(this.baseUrl);u.pathname=u.pathname.replace(/\/?$/,'/')+this.channel+'.json';
-    const envelope:unknown=JSON.parse((await limitedBytes(await this.fetcher(u.href,{signal:this.signal}),1024*1024)).toString('utf8'));
+    let response:Response;
+    try{response=await this.fetcher(u.href,{signal:this.signal});if(!response.ok){await response.body?.cancel();throw new HttpResponseError(response.status,u.hostname);}}
+    catch(error){if(error instanceof HttpResponseError&&error.status===404){this.current=undefined;this.envelope=undefined;throw new UnpublishedChannelError(this.channel);}throw error;}
+    const envelope:unknown=JSON.parse((await limitedBytes(response,1024*1024)).toString('utf8'));
     const release=verifyAppRelease(envelope,this.key,this.channel),e=envelopeSchema.parse(envelope);
     const file=await safePath(this.root,'accepted-channels.json');const old=await exists(file)?trustSchema.parse(await readJson(file)):{};const previous=old[this.channel];
     if(previous&&(release.sequence<previous.sequence||release.sequence===previous.sequence&&e.payload!==previous.payload))throw new Error('Launcher update rollback or reused sequence rejected.');

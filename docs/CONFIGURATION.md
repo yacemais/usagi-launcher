@@ -40,7 +40,9 @@ HTTPS downloads reject private/loopback/link-local destinations, credentials in 
 nonstandard ports, unsafe redirects and DNS results that are not public. Development
 HTTP fixture servers are injected only by test code; there is no production bypass.
 Server-list TCP ping may target a private game server, independently of downloads.
-An installed pack checks its configured signed update source on startup. A known new
+Usagi checks its configured signed update source at startup and every 15 minutes,
+and synchronizes when no game/account operation is active. During gameplay it only
+reports releases, deferring installation until the game closes. A known new
 version changes the Home action to UPDATE and must be installed before launching.
 If the update endpoint is unavailable, the error is shown while the previously
 verified installed files remain available for a later authenticated launch.

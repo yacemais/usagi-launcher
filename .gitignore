@@ -40,3 +40,10 @@ services/social/data/
 integrations/forge/.gradle/
 integrations/forge/build/
 integrations/forge/run/
+*.jar
+*.zip
+*.mrpack
+*.private.json
+file-[a-f0-9]*
+modpack-staging/
+modpack-releases/

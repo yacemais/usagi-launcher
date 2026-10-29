@@ -1,5 +1,28 @@
 # Usagi development releases
 
+## 0.4.0 — distribution and updates (Beta)
+
+- Added official Prism staging, permission/privacy review and approval-gated GitHub
+  modpack release preparation with independent versioning and signed inventories.
+- Added startup synchronization, reusable verified downloads, compatibility checks,
+  process locking and centralized update notifications with 15-minute checks.
+- Missing launcher/modpack feeds now show that no release is published instead of
+  a raw HTTP 404 error. Stable never switches to Beta automatically.
+- Restored explicit Windows taskbar icon metadata using the existing rabbit logo;
+  development/test windows now have separate taskbar identities.
+- Preserved existing authentication, NSIS updater, player data, visual design,
+  gameplay identifiers and the Celestials currency.
+
+155 automated tests passed, with real packaged GUI, notification persistence and
+Windows taskbar-property checks. The Windows installer and complete unpacked folder
+are available with signed Beta update metadata and SHA-256 checksums.
+
+The modpack is staged privately and is not included in this release. Redistribution,
+client compatibility and privacy reviews still gate its publication. Minecraft API
+application approval and live Social/server testing remain pending. The Windows
+installer has no Authenticode certificate; installed-to-installed upgrade validation
+remains a separate acceptance test.
+
 ## 0.3.2 — branding update
 
 - Renamed remaining visible Celestia references to Usagi / Usagi SMP on Home,

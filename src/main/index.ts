@@ -11,8 +11,12 @@ import { loadProduct } from './config/product';
 import { AppUpdates } from './app-updates/service';
 import { microsoftBrowserUrl } from './authentication/browser';
 import { SocialClient } from './social/client';
+import { UpdateCenter } from './updates/center';
+import { windowIdentity,windowIcon } from './config/window-icon';
 app.setName('Usagi');
-app.setAppUserModelId('smp.celestia.launcher');
+const uiTest=process.env.USAGI_GUI_TEST==='1'||process.env.CELESTIA_GUI_TEST==='1';
+const windowAppId=windowIdentity(app.isPackaged,uiTest);
+app.setAppUserModelId(windowAppId);
 const testRoot=!app.isPackaged?process.env.USAGI_TEST_DATA||process.env.CELESTIA_TEST_DATA:undefined;
 const dataRoot=process.env.USAGI_DATA_DIR||process.env.CELESTIA_DATA_DIR||testRoot;
 if(dataRoot && (!path.isAbsolute(dataRoot) || [path.join(os.homedir(),'AppData/Roaming/PrismLauncher'),path.join(os.homedir(),'Documents/RobloxProject')].some(root=>inside(root.toLowerCase(),dataRoot.toLowerCase()) || inside(dataRoot.toLowerCase(),root.toLowerCase()))))throw new Error('Choose an absolute, dedicated Usagi data folder outside Prism and SMP development files.');
@@ -20,6 +24,8 @@ app.setPath('userData',dataRoot || path.join(app.getPath('appData'),'CelestiaLau
 protocol.registerSchemesAsPrivileged([{scheme:'celestia',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:false}}]);
 app.enableSandbox();
 let window:BrowserWindow|undefined,controller:Controller|undefined,appUpdates:AppUpdates|undefined,closing=false,lastNotice='';
+let lastErrorNotice='';
+let updateCenter:UpdateCenter|undefined;
 const configuredDevUrl=process.env.USAGI_DEV_URL||process.env.CELESTIA_DEV_URL;
 const devUrl=!app.isPackaged && configuredDevUrl==='http://127.0.0.1:5173'?configuredDevUrl:undefined;
 const csp=`default-src 'none'; script-src 'self'; style-src 'self'${devUrl?" 'unsafe-inline'":''}; img-src 'self' data:; font-src 'self'; connect-src ${devUrl?'http://127.0.0.1:5173 ws://127.0.0.1:5173':"'none'"}; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'`;
@@ -33,15 +39,22 @@ else app.whenReady().then(async()=>{
   });
   session.defaultSession.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));session.defaultSession.setPermissionCheckHandler(()=>false);
   session.defaultSession.webRequest.onHeadersReceived((details,callback)=>callback({responseHeaders:{...details.responseHeaders,'Content-Security-Policy':[csp]}}));
-  controller=new Controller(app.getPath('userData'),{available:async()=>await safeStorage.isAsyncEncryptionAvailable() && (process.platform!=='linux' || safeStorage.getSelectedStorageBackend()!=='basic_text'),encrypt:v=>safeStorage.encryptStringAsync(v),decrypt:async v=>(await safeStorage.decryptStringAsync(v)).result},state=>{if(window && !window.isDestroyed())window.webContents.send('celestia:state',state);const notice=state.error || (state.gameExit?.at?state.gameExit.at:'');if(notice && notice!==lastNotice){lastNotice=notice;if(state.settings.notifications && Notification.isSupported())new Notification({title:'Usagi',body:state.error || state.message}).show();}},async url=>{
+  controller=new Controller(app.getPath('userData'),{available:async()=>await safeStorage.isAsyncEncryptionAvailable() && (process.platform!=='linux' || safeStorage.getSelectedStorageBackend()!=='basic_text'),encrypt:v=>safeStorage.encryptStringAsync(v),decrypt:async v=>(await safeStorage.decryptStringAsync(v)).result},state=>{updateCenter?.observe(state);state.updateNotices=updateCenter?.notices;if(window && !window.isDestroyed())window.webContents.send('celestia:state',state);if(state.error&&state.error!==lastErrorNotice){lastErrorNotice=state.error;if(state.phase!=='playing'&&state.settings.notifications&&Notification.isSupported()&&!updateCenter?.notices.some(n=>n.kind==='failure'&&n.message===state.error))new Notification({title:'Usagi',body:state.error}).show();}const notice=state.gameExit?.at || '';if(notice && notice!==lastNotice){lastNotice=notice;if(state.settings.notifications && Notification.isSupported())new Notification({title:'Usagi',body:state.message}).show();void updateCenter?.check().catch(error=>controller?.log.write(String(error)));}},async url=>{
     const u=new URL(url);if(u.hostname!=='textures.minecraft.net' || u.protocol!=='https:')return undefined;const bytes=await limitedBytes(await secureFetch(u.href),2*1024*1024);const image=nativeImage.createFromBuffer(bytes);if(image.isEmpty() || image.getSize().width<16)return undefined;return image.crop({x:8,y:8,width:8,height:8}).toDataURL();
   },async url=>shell.openExternal(microsoftBrowserUrl(url)),product);
   appUpdates=new AppUpdates(path.join(app.getPath('userData'),'launcher-updates'),product.launcherUpdates,{version:app.getVersion(),name:'Usagi',isPackaged:app.isPackaged,appUpdateConfigPath:path.join(app.getAppPath(),'config/app-update.yml'),userDataPath:app.getPath('userData'),baseCachePath:path.join(app.getPath('userData'),'launcher-updates'),whenReady:async()=>{await app.whenReady();},relaunch:()=>app.relaunch(),quit:()=>{if(appUpdates?.state.phase==='installing')app.quit();},onQuit:handler=>app.on('quit',(_event,code)=>handler(code))},controller.log,()=>{controller!.state.appUpdate=appUpdates!.state;controller!.emit();},()=>controller!.state.phase==='idle'&&!controller!.accounts.busy);
   controller.state.appUpdate=appUpdates.state;
+  updateCenter=new UpdateCenter(path.join(app.getPath('userData'),'update-notices.json'),()=>controller!.snapshot(),async()=>{const c=controller!;if(['idle','playing'].includes(c.state.phase)&&!c.accounts.busy&&c.settings.value.manifestUrl&&c.settings.value.manifestPublicKey)await c.checkUpdates(true);},async()=>{if(!appUpdates!.busy&&appUpdates!.state.phase!=='unconfigured')await appUpdates!.check(controller!.settings.value.appUpdateChannel);},()=>{controller!.state.updateNotices=updateCenter!.notices;controller!.emit();},notice=>{if(Notification.isSupported())new Notification({title:notice.subject==='launcher'?'Usagi launcher update':'Usagi modpack update',body:notice.message+(notice.version?' ('+notice.version+')':'')}).show();});
+  await updateCenter.load().catch(error=>controller!.log.write('Update notification history could not load: '+String(error)));
+  controller.state.updateNotices=updateCenter.notices;
+  app.on('before-quit',()=>updateCenter?.stop());
+  app.once('before-quit',event=>{event.preventDefault();void updateCenter!.settled().catch(error=>controller!.log.write('Notification history could not be saved: '+String(error))).finally(()=>app.quit());});
   const social=new SocialClient(product.social.baseUrl,()=>controller!.accounts.session(),()=>{controller!.state.social=social.state;controller!.emit();},message=>{if(controller!.settings.value.notifications&&Notification.isSupported())new Notification({title:'Usagi Social',body:message}).show();});
   controller.state.social=social.state;
   app.on('before-quit',()=>{void social.disconnect(false);});
-  window=new BrowserWindow({width:1200,height:760,minWidth:960,minHeight:620,frame:false,backgroundColor:'#262225',show:false,title:'Usagi',icon:app.isPackaged?path.join(process.resourcesPath,'icon.ico'):path.resolve('build/icon.ico'),webPreferences:{preload:path.resolve(__dirname,'../preload/index.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true,allowRunningInsecureContent:false}});
+  const iconPath=windowIcon(app.getAppPath(),process.resourcesPath,app.isPackaged);
+  window=new BrowserWindow({width:1200,height:760,minWidth:960,minHeight:620,frame:false,backgroundColor:'#262225',show:false,title:'Usagi',icon:iconPath,webPreferences:{preload:path.resolve(__dirname,'../preload/index.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true,allowRunningInsecureContent:false}});
+  if(process.platform==='win32')window.setAppDetails({appId:windowAppId,appIconPath:iconPath,appIconIndex:0,relaunchCommand:'"'+process.execPath+'"'+(app.isPackaged?'':' "'+app.getAppPath()+'"'),relaunchDisplayName:uiTest?'Usagi (test)':'Usagi'});
   window.webContents.setWindowOpenHandler(()=>({action:'deny'}));window.webContents.on('will-navigate',(event,url)=>{if(!trusted(url))event.preventDefault();});
   window.once('ready-to-show',()=>{if(app.isPackaged || process.env.CELESTIA_GUI_TEST!=='1')window?.show();});window.on('maximize',()=>{controller!.state.maximized=true;controller!.emit(true);});window.on('unmaximize',()=>{controller!.state.maximized=false;controller!.emit(true);});
   window.on('close',event=>{
@@ -66,6 +79,8 @@ else app.whenReady().then(async()=>{
         case 'install':await c.install();break;
         case 'verify':await c.verify();break;
         case 'updates.check':await c.checkUpdates();break;
+        case 'updates.checkAll':await updateCenter!.check();break;
+        case 'updates.dismiss':updateCenter!.dismiss(parsed.id);break;
         case 'cancel':c.cancel();break;
         case 'launch':await c.launch(()=>{if(c.settings.value.minimizeOnLaunch || c.settings.value.launchBehavior==='minimize')window?.minimize();});break;
         case 'auth.login':if(c.state.phase!=='idle')throw new Error('Finish the current operation before signing in.');await social.disconnect();await c.accounts.login(parsed.method);if(product.social.baseUrl)void social.connect().catch(()=>{});break;
@@ -85,7 +100,7 @@ else app.whenReady().then(async()=>{
       return {ok:true,state:c.snapshot()};
     }catch(error){const text=controller?.log.clean(error instanceof Error?error.message:'Request failed.') ?? 'Request failed.';return {ok:false,error:text};}
   });
-  await window.loadURL(devUrl || 'celestia://app/index.html');void controller.initialise().then(()=>{if(product.social.baseUrl&&controller!.accounts.selected)void social.connect().catch(()=>{});if(appUpdates!.state.phase!=='unconfigured')void appUpdates!.check(controller!.settings.value.appUpdateChannel).catch(error=>controller!.log.write(String(error),'app-updates.log'));});
+  await window.loadURL(devUrl || 'celestia://app/index.html');void controller.initialise().then(()=>{if(product.social.baseUrl&&controller!.accounts.selected)void social.connect().catch(()=>{});updateCenter!.start();void updateCenter!.check().catch(error=>controller!.log.write(String(error)));});
   const timer=setInterval(()=>void controller?.refreshServer(),60000);timer.unref();
 });
 app.on('second-instance',()=>{if(window?.isMinimized())window.restore();window?.focus();});app.on('window-all-closed',()=>app.quit());

@@ -19,12 +19,15 @@ const publicLookup:NonNullable<TcpNetConnectOpts['lookup']>=(hostname,options,ca
   });
 };
 const dispatcher=new Agent({connect:{lookup:publicLookup},headersTimeout:30000,bodyTimeout:30000});
+export class HttpResponseError extends Error {
+  constructor(readonly status:number,hostname:string){super(`Request failed (${status}) for ${hostname}.`);this.name='HttpResponseError';}
+}
 export async function secureFetch(url:string, options:RequestInit={}, hops=0):Promise<Response> {
   const u=httpsUrl(url); const hostname=u.hostname.replace(/^\[|\]$/g,'');if(isIP(hostname) && !publicIp(hostname))throw new Error('Private download addresses are not allowed.');
   const signal=options.signal ?? AbortSignal.timeout(30000);
   const response=await httpFetch(u,{...options,signal,redirect:'manual',dispatcher} as Parameters<typeof httpFetch>[1]) as unknown as Response;
   if([301,302,303,307,308].includes(response.status)) { await response.body?.cancel(); if(hops>=4) throw new Error('Too many download redirects.'); const next=new URL(response.headers.get('location') ?? '',u); return secureFetch(next.href,options,hops+1); }
-  if(!response.ok) { await response.body?.cancel(); throw new Error(`Request failed (${response.status}) for ${u.hostname}.`); }
+  if(!response.ok) { await response.body?.cancel(); throw new HttpResponseError(response.status,u.hostname); }
   return response;
 }
 export async function limitedBytes(response:Response, max:number) {

@@ -17,12 +17,12 @@
   saved-account refresh/logout, account switching or authenticated game launch can
   be verified. Windows credential protection was tested separately. Unit fixtures
   cover orchestration and entitlement rejection; they do not bypass this live denial.
-- The GitHub site/news endpoints are deployed, but there is no published launcher
-  release or live signed update channel yet. The
-  application-update verification key is bundled; its private key stays local until
-  separately approved secret-store setup. No production modpack manifest, modpack
-  verification key or game-server address is configured. There is no invented news,
-  simulated online status, bundled pack, or redistribution-permission audit.
+- Version 0.4.0 is a Beta launcher preview, with independent distribution/update
+  tools. Both verification public keys are configured; private keys stay local.
+  No production modpack release
+  or game-server address is available. The Prism source is staged and embedded
+  licenses inspected, but exact redistribution/client/privacy review still blocks
+  publication. See MODPACK_AUDIT.md and MODPACK_DISTRIBUTION.md.
 - Windows Java 17 on this host cannot start from a path containing the character 雪
   and loses this character in command-line classpaths. Official downloaded files
   were hash-verified and the same runtime worked at an ASCII path. Use an ASCII

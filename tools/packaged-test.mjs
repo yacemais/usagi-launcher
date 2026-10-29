@@ -4,7 +4,7 @@ import path from 'node:path';
 const core=process.argv.includes('--core');
 const root=path.resolve(core?'.scratch-runtime/install smoke':'.scratch-runtime/packaged smoke');await fs.mkdir(root,{recursive:true});
 const executablePath=path.resolve(process.env.USAGI_PACKAGED_EXE||'release/win-unpacked/Usagi.exe');
-const application=await electron.launch({executablePath,cwd:root,env:{...process.env,CELESTIA_DATA_DIR:root},timeout:60000});
+const application=await electron.launch({executablePath,cwd:root,env:{...process.env,CELESTIA_DATA_DIR:root,USAGI_GUI_TEST:'1'},timeout:60000});
 try {
   const page=await application.firstWindow();page.setDefaultTimeout(60000);const errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.waitForSelector('.hero');await page.evaluate(()=>document.fonts.ready);
   const idle=async(timeout=120000)=>{const deadline=Date.now()+timeout;while(Date.now()<deadline){const r=await page.evaluate(()=>window.celestia.request({type:'snapshot'}));if(r.ok && r.state.phase==='idle')return r.state;await new Promise(resolve=>setTimeout(resolve,250));}throw new Error('Packaged operation timed out.');};await idle();

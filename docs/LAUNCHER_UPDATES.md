@@ -1,5 +1,19 @@
 # Usagi launcher updates
 
+For the current independent `launcher-v` / `modpack-v` publication flow, see
+[MODPACK_DISTRIBUTION.md](MODPACK_DISTRIBUTION.md). The application update center now
+checks at startup, every 15 minutes and manually, and persists per-version notices.
+Verified downloaded installers remain ready across successful periodic checks.
+
+A missing channel JSON (HTTP 404) is shown as an unpublished channel, with the
+checked time and no offered version. It is not labelled up to date and does not
+produce an update failure notification. Stable never falls back to Beta automatically;
+use the existing Release channel selector explicitly for development releases.
+Other HTTP errors, invalid signatures, expired metadata and missing installer files
+remain failures. Accepted sequence history is retained even while a channel is absent.
+At verification on 2026-10-29, Stable returned 404 and Beta returned the correctly
+signed 0.3.2 feed. A stable release/feed still needs owner-approved publication.
+
 Application updates and Minecraft modpack updates are independent services. The app
 uses pinned electron-updater 6.8.11's NSIS cache/install machinery, with a small
 subclass using the inspected protected APIs for signed metadata and secure downloads.
@@ -57,7 +71,7 @@ Keep previous installers available for manual recovery. See HOSTING.md for the e
 
 ## Client behavior
 
-Usagi checks configured app releases at startup and exposes Check, Download, Cancel,
+Usagi checks configured app releases at startup and every 15 minutes, and exposes Check, Download, Cancel,
 and Restart and install on the Usagi tab. Download progress is real. Downloads use
 the existing bounded HTTPS/DNS/path protections, retries and SHA-512 verification;
 there is no simulated transfer or remote script execution in the renderer. Current

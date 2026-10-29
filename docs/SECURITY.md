@@ -58,6 +58,12 @@ and single application instance prevent competing ordinary update/launch operati
 Fatal download errors abort remaining workers and wait for them before releasing the
 operation lock. Cancellation is deferred during commit/rollback.
 
+The pack updater additionally holds a per-game-directory lock file containing a PID
+and random owner ID. Concurrent processes fail closed; a completed dead process's
+lock is removed before journal recovery. An incomplete/corrupt lock or reused live
+PID requires manual review with other launcher processes closed. Verified content
+downloads are retained by hash and rechecked before reuse after interrupted updates.
+
 This is recoverable multi-file replacement, not a transactional filesystem. File
 content is fsynced before journal/rename boundaries, but directory metadata and Windows
 storage caches can still be lost on power failure. Tests exercise interrupted journal

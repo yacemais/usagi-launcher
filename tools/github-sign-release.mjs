@@ -14,7 +14,7 @@ const keyFile=path.join(process.env.RUNNER_TEMP||os.tmpdir(),'usagi-app-private.
 await fs.writeFile(keyFile,key.export({type:'pkcs8',format:'pem'}),{mode:0o600});
 try{
   const installer=`Usagi-Setup-${version}.exe`,now=Date.now();
-  const template={schemaVersion:1,product:'usagi',platform:'win32',arch:'x64',channel,sequence:Math.floor(now/1000),version,publishedAt:new Date(now).toISOString(),expiresAt:new Date(now+90*86400000).toISOString(),notes:await fs.readFile('deploy/site/public/changelog.md','utf8'),installer:{url:`https://github.com/${repository}/releases/download/v${version}/${installer}`}};
+  const template={schemaVersion:1,product:'usagi',platform:'win32',arch:'x64',channel,sequence:Math.floor(now/1000),version,publishedAt:new Date(now).toISOString(),expiresAt:new Date(now+90*86400000).toISOString(),notes:await fs.readFile('deploy/site/public/changelog.md','utf8'),installer:{url:`https://github.com/${repository}/releases/download/launcher-v${version}/${installer}`}};
   await fs.writeFile('release/app-release-template.json',JSON.stringify(template));
   execFileSync(process.execPath,['dist/tools/publish-app-release.cjs','release/app-release-template.json',`release/${installer}`,keyFile,`release/usagi-${channel}.json`],{stdio:'inherit',shell:false,windowsHide:true});
   const digest=createHash('sha256').update(await fs.readFile(`release/${installer}`)).digest('hex');await fs.writeFile('release/SHA256SUMS.txt',`${digest}  ${installer}\n`);

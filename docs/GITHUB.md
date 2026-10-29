@@ -1,5 +1,12 @@
 # GitHub hosting
 
+The 0.4.0 launcher Beta uses `launcher-v0.4.0`, independently of future `modpack-v`
+releases. Its assets are the Windows installer, complete unpacked ZIP, reviewed
+source ZIP, owner-signed `usagi-beta.json` and `SHA256SUMS.txt`. The existing Pages
+workflow verifies the published signed feed before updating the Beta channel.
+Stable remains absent until a stable release is explicitly approved. No Prism
+modpack binaries or private signing keys are part of launcher publication.
+
 Repository: https://github.com/yacemais/usagi-launcher. The owner approved the first
 source push and Pages setup. Reviewed commit 9cee394 was pushed to main; Pages is
 enabled with GitHub Actions as its source. The owner subsequently authorized

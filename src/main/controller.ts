@@ -6,12 +6,14 @@ import { SettingsStore, maxRamMb, totalRamMb } from './settings/store';
 import { Accounts, type Protection } from './authentication/accounts';
 import { Logger } from './logging/logger';
 import { MinecraftRuntime } from './minecraft/runtime';
-import { PackUpdater } from './updater/updater';
+import { PackUpdater,UnpublishedPackError } from './updater/updater';
 import { queryServer } from './server/status';
 import { fetchNews } from './server/news';
 import { inspectJava } from './minecraft/java';
 import { exists } from './security/files';
 import { emptyProduct,type ProductConfig } from './config/product';
+import { assertPackCompatibility } from './updater/manifest';
+import { version as launcherVersion } from '../../package.json';
 export class Controller {
   readonly settings:SettingsStore; readonly log:Logger; readonly accounts:Accounts; readonly runtime:MinecraftRuntime;
   state:Snapshot; private abort?:AbortController; private child?:ChildProcess; private lastBroadcast=0; private pendingBroadcast?:ReturnType<typeof setTimeout>; private operation?:Promise<void>;
@@ -28,15 +30,16 @@ export class Controller {
   async initialise() {
     try {await this.settings.load();const s=this.settings.value,p=this.product;if(p.microsoftClientId)s.microsoftClientId=p.microsoftClientId;s.manifestUrl ||=p.modpack.manifestUrl;s.manifestPublicKey ||=p.modpack.publicKey;s.newsUrl ||=p.newsUrl;if(!s.serverHost&&p.server.host){s.serverHost=p.server.host;s.serverPort=p.server.port;}this.settings.validate(s);await this.accounts.configure(s.microsoftClientId);await this.verifyInternal();if(this.state.installation==='ready')this.state.message='Usagi SMP is ready.';}
     catch(error) {this.failure(error);}
-    finally {this.state.phase='idle';this.emit(true);void this.refreshServer();void this.refreshNews();if(this.state.installation==='ready' && this.settings.value.manifestUrl)void this.checkUpdates().catch(error=>this.log.write('Automatic update check could not start: '+this.log.clean(String(error))));}
+    finally {this.state.phase='idle';this.emit(true);void this.refreshServer();void this.refreshNews();}
   }
   private failure(error:unknown) { const message=this.log.clean(error instanceof Error?error.message:'The operation could not finish.');this.state.error=message;this.state.message=message;this.log.write('Operation failed: '+message); }
   async save(settings:Settings) {
     if(this.state.phase!=='idle' || this.accounts.busy) throw new Error('Finish the current operation before changing settings.');
     if(this.product.microsoftClientId&&settings.microsoftClientId!==this.product.microsoftClientId)throw new Error('This Usagi build uses its bundled Microsoft application registration.');
-    await this.settings.save(settings);await this.accounts.configure(settings.microsoftClientId);this.state.error=undefined;this.state.installation='missing';this.state.availableVersion=undefined;this.state.updateAvailable=undefined;await this.verify();void this.refreshServer();void this.refreshNews();
+    await this.settings.save(settings);await this.accounts.configure(settings.microsoftClientId);this.state.error=undefined;this.state.installation='missing';this.state.availableVersion=undefined;this.state.updateAvailable=undefined;this.state.packFeedStatus=undefined;await this.verify();void this.refreshServer();void this.refreshNews();
   }
   private async verifyInternal(signal?:AbortSignal) {
+    await this.updater().recover();
     this.state.installation='repair'; const core=await this.runtime.verify(signal); const s=this.settings.value;
     if(!core) {const installed=await exists(path.join(this.root,'runtime/runtime-receipt.json'));this.state.installation=installed?'repair':'missing';this.state.message=installed?'Required runtime files are missing or changed. Repair before playing.':'Install the required game files to get started.';return;}
     if(!s.manifestPublicKey) {this.state.installation='missing';this.state.message='Minecraft is installed. Configure a signed modpack source to continue.';return;}
@@ -51,14 +54,36 @@ export class Controller {
     this.operation=work;try{await work;}finally{this.operation=undefined;}
   }
   async verify() {await this.run('verifying',async signal=>{this.state.message='Verifying required game and modpack files…';await this.verifyInternal(signal);if(this.state.installation==='ready')this.state.message='All required files verified.';});}
-  async checkUpdates() {await this.run('checking',async signal=>{const s=this.settings.value;if(!s.manifestUrl || !s.manifestPublicKey)throw new Error('Add your signed manifest URL and Ed25519 public key in Settings.');const result=await this.updater().check(s.manifestUrl,s.manifestPublicKey,signal);this.state.availableVersion=result.manifest.version;this.state.updateAvailable=result.updateAvailable;this.state.message=result.updateAvailable?'Modpack '+result.manifest.version+' is available.':'You have the current modpack version.';});}
+  async checkUpdates(synchronize=false) {
+    const duringGame=this.state.phase==='playing';
+    const inspect=async(signal:AbortSignal)=>{
+      const s=this.settings.value;if(!s.manifestUrl || !s.manifestPublicKey)throw new Error('Add your signed manifest URL and Ed25519 public key in Settings.');
+      const updater=this.updater();let result:Awaited<ReturnType<PackUpdater['check']>>;
+      try{result=await updater.check(s.manifestUrl,s.manifestPublicKey,signal);}catch(error){if(!(error instanceof UnpublishedPackError))throw error;this.state.packFeedStatus='empty';if(!duringGame)this.state.message=error.message;return;}
+      this.state.packFeedStatus='published';
+      this.state.availableVersion=result.manifest.version;this.state.updateAvailable=result.updateAvailable;this.state.packNotes=result.manifest.notes;this.state.requiredLauncherVersion=result.manifest.minLauncherVersion;
+      assertPackCompatibility(result.manifest,launcherVersion);this.state.requiredLauncherVersion=undefined;this.emit(true);
+      if(duringGame)return;
+      if(synchronize && (result.updateAvailable || !(await updater.verify(s.manifestPublicKey,s.optionalFiles)).ready)) {
+        this.state.phase='updating';this.state.installation='repair';this.emit(true);await this.settings.prepareGame();
+        await updater.update(result.manifest,result.envelope,s.optionalFiles,signal,s.concurrency);
+        const verified=await updater.verify(s.manifestPublicKey,s.optionalFiles);if(!verified.ready)throw new Error('Modpack verification failed: '+verified.reason);
+        this.state.installedVersion=result.manifest.version;this.state.updateAvailable=false;this.state.packSyncedAt=new Date().toISOString();await this.verifyInternal(signal);
+        this.state.message=this.snapshot().installation==='ready'?'Modpack '+result.manifest.version+' synchronized and verified.':'Modpack '+result.manifest.version+' synchronized. '+this.state.message;
+      }else this.state.message=result.updateAvailable?'Modpack '+result.manifest.version+' is available.':'You have the current modpack version.';
+    };
+    if(this.state.phase==='playing'){try{await inspect(AbortSignal.timeout(30000));}catch(error){this.log.write('Modpack check: '+this.log.clean(String(error)));}finally{this.emit(true);}return;}
+    await this.run('checking',inspect);
+  }
   async install() {await this.run('installing',async signal=>{
     await this.settings.prepareGame();const s=this.settings.value;await this.updater().recover();
+    const result=s.manifestUrl&&s.manifestPublicKey?await this.updater().check(s.manifestUrl,s.manifestPublicKey,signal):undefined;
+    if(result){this.state.availableVersion=result.manifest.version;this.state.updateAvailable=result.updateAvailable;this.state.requiredLauncherVersion=result.manifest.minLauncherVersion;assertPackCompatibility(result.manifest,launcherVersion);this.state.requiredLauncherVersion=undefined;}
     this.state.installation='repair';this.state.java=await this.runtime.install(s,signal);
     if(!s.manifestUrl || !s.manifestPublicKey) {this.state.installation='missing';this.state.message='Minecraft, Forge and Java are installed. Add a signed modpack source in Settings.';return;}
-    this.state.phase='updating';const result=await this.updater().check(s.manifestUrl,s.manifestPublicKey,signal);this.state.availableVersion=result.manifest.version;
-    await this.updater().update(result.manifest,result.envelope,s.optionalFiles,signal,s.concurrency);await this.verifyInternal(signal);
-    if(this.snapshot().installation!=='ready')throw new Error('Installation verification did not pass. Use Repair before playing.');this.state.updateAvailable=false;this.state.message='Usagi SMP is installed and verified.';
+    this.state.phase='updating';
+    await this.updater().update(result!.manifest,result!.envelope,s.optionalFiles,signal,s.concurrency);await this.verifyInternal(signal);
+    if(this.snapshot().installation!=='ready')throw new Error('Installation verification did not pass. Use Repair before playing.');this.state.updateAvailable=false;this.state.packSyncedAt=new Date().toISOString();this.state.message='Usagi SMP is installed and verified.';
   });}
   cancel() {this.abort?.abort(new Error('Cancelled by user.'));}
   async settled() {await this.operation;}

@@ -1,5 +1,11 @@
 # Exact hosting layout for Usagi
 
+The 0.4.0 distribution implementation uses GitHub Releases for modpack file assets
+as well as launcher installers, with Pages serving both signed feeds. See
+[MODPACK_DISTRIBUTION.md](MODPACK_DISTRIBUTION.md) for the current exact structure and
+commands. The R2 section below remains the optional migration design. Historic
+launcher `v0.x` tags remain readable; new tags are `launcher-vX.Y.Z` and `modpack-vX.Y.Z`.
+
 Current owner choice: **https://github.com/yacemais/usagi-launcher**. GitHub Releases
 and Pages workflows are installed; see GITHUB.md. The first source push and Pages
 deployment were approved and completed. The owner has also authorized the 0.3.0

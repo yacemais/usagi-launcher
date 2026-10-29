@@ -1,5 +1,77 @@
 # Usagi test report
 
+## 0.4.0 distribution system
+
+The release suite has 155 passing tests in 18 files on Windows.
+Tests distinguish feed 404s from installer 404s, retain rollback protection across an
+absent feed, reject real HTTP failures, and allow future published feeds to be found
+without automatic Beta fallback. A missing modpack feed is also informational during
+checks and preserves a previously verified installation.
+The rebuilt packaged GUI verified the real Stable 404 as informational, with no
+failure banners/notices, and verified the signed public Beta 0.3.2 feed after explicit
+channel selection in an isolated profile. No installer was downloaded or executed.
+
+Installed builds retain their application identity; development/test
+windows use separate taskbar identities. The existing owner ICO is explicitly set
+as the relaunch/group icon, and development icon paths resolve from the app folder,
+including when launched with a different working directory. Native Windows property
+inspection verified the declared icon and isolated identity in actual Electron.
+
+The original 110-test baseline passed before implementation. The expanded suite
+adds actual filesystem distribution tests, controller orchestration with mocked
+official runtime/authentication prerequisites, persistent update-center checks and
+the actual PowerShell publication approval flow with isolated fake CLI tools.
+No public test release is created and no Minecraft authentication bypass exists.
+The distribution implementation passed its initial 144-test integration milestone
+before the additional taskbar and missing-channel regression cases.
+
+| Required scenario | Evidence |
+| --- | --- |
+| Fresh installation | Full signed manifest installs into an empty fixture folder; controller enables ready only after verification |
+| Already current | Hash comparison performs zero additional content downloads |
+| Added mod | Only the new JAR is fetched alongside other changed files |
+| Updated mod | Replaces the changed tracked JAR after verified staging |
+| Removed managed mod | Deletes only the prior unchanged tracked JAR; changed obsolete JARs block rather than enabling a potentially incompatible pack |
+| Updated configuration | Replaces managed config; preserves personal seed preferences |
+| Player data preservation | Worlds, screenshots, options, unrelated mods and personal resourcepacks survive |
+| Interrupted downloads | Aborts streams, retains the old ledger, retries safely, reuses completed verified content |
+| Corrupt content | Size/hash rejection happens before replacement; real NSIS cache corruption tests also pass |
+| Offline startup | Previously verified installation remains ready after a failed check; actual launch still requires official authentication |
+| GitHub failures | Explicit API/offline error cases and pagination tests; pack/application checks remain independent |
+| Release notifications | Per-subject available versions, compatibility, completion and failure notices |
+| Duplicate prevention | Repeated checks, dismissal and persisted-history reload retain one notice per version/event |
+| Independent versions | Pack increments independently; old and new launcher tag formats remain supported |
+| Compatibility | Requires the declared launcher version before core/pack changes or account requests |
+| Failed-update recovery | Injected real file-replacement failure rolls back files and ledger; prepared journal recovery/conflicts tested |
+| Concurrency | Concurrent updater instances rejected; live PID lock respected, dead process lock reclaimed |
+| Windows paths | A case-only managed filename change cannot delete the newly declared file |
+| Stable source snapshot | A source change to an already copied file later in the staging pass is rejected |
+| Publishing approval | Actual PowerShell script makes no GitHub CLI calls on declined approval; approved mock upload validates digests; mismatching drafts cannot be overwritten |
+
+The real Prism instance was read into a separate ignored stage; file sizes/hashes
+were compared against the source around copying. Its 493-file candidate remains
+blocked by the explicit permission/client/privacy review. Real embedded archive
+metadata was inspected without executing mods or the Prism bootstrap.
+
+Production compilation, the existing actual Electron navigation/security GUI test,
+and the dedicated notification UI/restart-persistence test passed. Windows NSIS and
+unpacked 0.4.0 builds are under `release/modpack-0.4.0/`. The packaged executable
+passed smoke/security/navigation checks and the notification persistence test.
+The Pages builder prepared a local preview from one verified existing beta feed;
+no modpack feed was fabricated or published. A real installed-to-installed NSIS upgrade, public publication, physical
+power cuts and authenticated modded gameplay remain external acceptance tests.
+
+```powershell
+npm test
+npm run build
+npm run test:gui
+node tools/build-release-tools.mjs
+node tools/audit-publication.mjs --worktree
+node tools/update-gui-test.mjs
+```
+
+The sections below retain historical results for prior releases.
+
 ## 0.3.2 branding update
 
 Compilation and all 110 existing regression tests passed after replacing visible

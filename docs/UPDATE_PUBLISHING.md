@@ -1,6 +1,11 @@
 # Signed modpack update publishing
 
-There is no production endpoint or pack release in this repository. Files under
+The current 0.4.0 Prism-to-GitHub workflow is documented in
+[MODPACK_DISTRIBUTION.md](MODPACK_DISTRIBUTION.md), including exact PowerShell commands,
+permission review, independent version tags and automatic client synchronization.
+The sections below describe the original lower-level signing/transaction design.
+
+There is no published production pack release yet. Files under
 examples use reserved example.invalid URLs and placeholder hashes. They must not be
 configured as real releases. This launcher does not redistribute reference Prism mods.
 
@@ -12,7 +17,8 @@ the public key as SPKI PEM and give it to players through a trusted channel. Con
 the public key in Settings independently of downloading a manifest. HTTPS plus a
 hash inside an untrusted manifest would not authenticate a compromised publisher.
 
-No signing key is generated or bundled by default. Key rotation currently requires
+The 0.4.0 setup generated a separate local ignored pack key and bundles only its public
+half. Retain its private backup. Key rotation currently requires
 an authenticated manual public-key change; there is no remote trust-key rotation.
 
 ## Prepare the approved client files
@@ -22,7 +28,8 @@ Do not publish world saves, server.properties, ops, allowlists, credentials, pri
 server config or server-only mods. An allowlist of extensions cannot identify every
 secret inside an otherwise allowed config: the publisher must review contents.
 
-Use only these top-level folders: mods, config, kubejs, defaultconfigs, resourcepacks.
+Use only these top-level folders: mods, config, kubejs, defaultconfigs, resourcepacks,
+shaderpacks and moonlight-global-datapacks.
 No absolute paths, backslashes, `..`, Windows reserved names, alternate streams or
 symlinks/junctions are allowed. The publisher helper checks the actual release folder
 and every file hash/size before producing the signed envelope.
@@ -66,7 +73,8 @@ commit/recovery. A restart rolls back a prepared interrupted transaction; a comm
 journal is finalized without reapplying files.
 
 Only unchanged files explicitly tracked as managed may be removed when absent from
-the new selection. Modified removed files, untracked mods, seed preferences, worlds
+the new selection. Modified obsolete mods block installation until resolved; modified
+obsolete configs, untracked mods, seed preferences, worlds
 and player resources remain. Untracked conflicts block an overwrite instead of
 silently deleting the player's file. Existing signed installed releases can be
 verified offline after manifest expiry; fetching a new expired release is rejected.

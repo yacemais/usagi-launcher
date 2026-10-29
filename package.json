@@ -1,6 +1,6 @@
 {
   "name": "usagi-launcher",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "private": true,
   "description": "Usagi SMP launcher for Windows",
   "author": "Usagi SMP",
@@ -65,6 +65,7 @@
     "@types/react-dom": "19.3.0",
     "@types/semver": "7.7.1",
     "@types/ws": "8.18.2",
+    "@xmcl/yauzl": "2.10.0",
     "electron": "45.1.0",
     "electron-builder": "26.18.0",
     "esbuild": "0.28.2",

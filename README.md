@@ -1,10 +1,10 @@
 # Usagi
 
 Usagi is the Windows launcher for Usagi SMP: **Minecraft 1.20.1, Forge 47.4.28,
-Java 17**. Development preview **0.3.2** continues the existing launcher; the project directory,
+Java 17**. Development preview **0.4.0 (Beta)** continues the existing launcher; the project directory,
 game installer, signed modpack updates and protected player data remain in place.
 
-[Download the 0.3.2 development preview](https://github.com/yacemais/usagi-launcher/releases/tag/v0.3.2).
+[Download the 0.4.0 Beta preview](https://github.com/yacemais/usagi-launcher/releases/tag/launcher-v0.4.0).
 The release includes the Windows installer, complete unpacked folder and source.
 Version 0.3.1 fixes startup timing. The unchanged Social backend and Forge bridge
 remain available in [0.3.0](https://github.com/yacemais/usagi-launcher/releases/tag/v0.3.0).
@@ -20,6 +20,17 @@ the decorative sky layout with warm charcoal surfaces, dusty pink controls and a
 compact account/navigation layout. No AI-generated imagery or branding is used.
 
 ## Current status
+
+- Version 0.4.0 adds Prism staging, independently versioned GitHub modpack releases,
+  automatic synchronization, 15-minute checks and persistent update notifications.
+  See [the audit](docs/MODPACK_AUDIT.md) and
+  [exact preparation/publication commands](docs/MODPACK_DISTRIBUTION.md).
+  The real pack is staged privately; redistribution/client/privacy reviews and owner
+  publication approval are still required. The launcher release includes no modpack
+  binaries or player data. Select Beta in Updates to receive development releases.
+- Missing release feeds are shown as unpublished channels rather than raw HTTP 404
+  errors. Windows taskbar icons explicitly use the existing owner logo; test windows
+  use a separate identity so they cannot replace the normal launcher icon.
 
 - A 2.6 second startup animation uses the original logo, with no generated artwork
   or fake progress. It starts when the native window is visible, after decoding the
@@ -45,10 +56,11 @@ compact account/navigation layout. No AI-generated imagery or branding is used.
   handoff. The real cache/download path is tested with explicit fixtures. Installing
   a newer release over an installed launcher still needs an end-to-end deployment test.
 - Reviewed source and GitHub Pages are published for yacemais/usagi-launcher after
-  owner approval. The owner has authorized publishing 0.3.2 as a development
+  owner approval. The owner has authorized publishing 0.4.0 as a development
   prerelease on the beta channel. A local private signing key stays
   ignored, with its public key bundled. No Authenticode
-  certificate, approved modpack source or game server has been configured.
+  certificate or game server has been configured. The future modpack feed and a
+  separate verification key are bundled, pending approved modpack publication.
 
 ## Development
 
@@ -105,6 +117,7 @@ Prism, Celestia Shop and SMP quest files are not modified.
 - [Microsoft authentication setup and limitations](docs/MICROSOFT_AUTH.md)
 - [Hosting: exact files, URLs and folder tree](docs/HOSTING.md)
 - [Launcher updates](docs/LAUNCHER_UPDATES.md) and [modpack updates](docs/UPDATE_PUBLISHING.md)
+- [Complete modpack distribution workflow](docs/MODPACK_DISTRIBUTION.md) and [audit](docs/MODPACK_AUDIT.md)
 - [Test report](docs/TESTING.md), [security](docs/SECURITY.md), [known limitations](docs/KNOWN_LIMITATIONS.md)
 - [Owner asset and dependency credits](ASSET_CREDITS.md)
 - [Actual screenshots](docs/screenshots)

@@ -10,13 +10,14 @@ export interface Settings {
 export interface AppUpdateState {
   phase:'unconfigured'|'idle'|'checking'|'available'|'downloading'|'downloaded'|'installing'|'error';
   currentVersion:string; channel:'stable'|'beta'; availableVersion?:string; notes?:string; checkedAt?:string;
-  message:string; error?:string; progress?:Progress;
+  message:string; error?:string; progress?:Progress; channelStatus?:'published'|'empty';
 }
 export interface Profile { id:string; name:string; accountId:string; avatar?:string }
 export interface Progress { phase:string; file:string; downloaded:number; total:number; speed:number; filesDone:number; filesTotal:number }
 export interface ServerStatus { state:'unconfigured'|'checking'|'online'|'offline'; online?:number; max?:number; version?:string; checkedAt?:string; lastSuccess?:string; error?:string }
 export interface NewsItem { id:string; title:string; date:string; summary:string; content?:string; url?:string; image?:string }
 export interface Snapshot {
+  updateNotices?:UpdateNotice[]; packNotes?:string; requiredLauncherVersion?:string; packSyncedAt?:string; packFeedStatus?:'published'|'empty';
   social?:SocialState;
   settings:Settings; totalRamMb:number; maxRamMb:number; profiles:Profile[]; selectedAccount?:string; authBusy:boolean;
   deviceCode?:{ code:string; url:string; expiresAt:number }; phase:'idle'|'checking'|'installing'|'updating'|'verifying'|'launching'|'playing';
@@ -25,6 +26,7 @@ export interface Snapshot {
   progress?:Progress; message:string; error?:string; server:ServerStatus; news:NewsItem[]; newsState:'unconfigured'|'loading'|'ready'|'error'; newsError?:string;
   java?:{ path:string; version:string; major:number }; gameExit?:{ code:number|null; crashed:boolean; at:string }; maximized:boolean;
 }
+export interface UpdateNotice {id:string;subject:'launcher'|'modpack';kind:'available'|'compatibility'|'complete'|'failure';current?:string;version?:string;message:string;at:string;dismissed:boolean}
 export type Command =
   | {type:'startup.visibility'}
   | {type:'social.connect'} | {type:'social.disconnect'} | {type:'social.action';action:SocialAction}
@@ -32,6 +34,7 @@ export type Command =
   | {type:'install'} | {type:'verify'} | {type:'updates.check'} | {type:'cancel'} | {type:'launch'}
   | {type:'auth.login';method?:'browser'|'device'} | {type:'auth.cancel'} | {type:'auth.logout'; accountId:string} | {type:'auth.select'; accountId:string}
   | {type:'appUpdates.check'} | {type:'appUpdates.download'} | {type:'appUpdates.cancel'} | {type:'appUpdates.install'}
+  | {type:'updates.checkAll'} | {type:'updates.dismiss';id:string}
   | {type:'server.refresh'} | {type:'news.refresh'} | {type:'external.open'; url:string}
   | {type:'folder.open'; folder:'logs'|'game'|'crashes'} | {type:'window'; action:'minimize'|'maximize'|'close'};
 export type Response = {ok:true; state?:Snapshot; path?:string;socialResult?:unknown;visible?:boolean} | {ok:false; error:string};
