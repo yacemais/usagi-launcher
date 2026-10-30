@@ -12,7 +12,8 @@ const client=new SocialClient(origin,async()=>({token}),()=>{},()=>{},true);let 
 try{
   await client.connect();const alpha=app.store.row('SELECT id FROM users WHERE uuid=?','1'.repeat(32)).id;
   const classpath=await fs.readFile('integrations/forge/build/wire-classpath.txt','utf8');
-  child=spawn(path.join(process.env.JAVA_HOME,'bin/java.exe'),['-cp',classpath,'smp.usagi.social.BridgeWireProbe'],{env:{...process.env,SOCIAL_TEST_ORIGIN:origin,USAGI_BRIDGE_SECRET:secret,SOCIAL_TEST_ALPHA_ID:alpha},shell:false,windowsHide:true,stdio:['ignore','pipe','pipe']});
+  const environment=Object.fromEntries(['SystemRoot','WINDIR','PATH','Path','TEMP','TMP','ComSpec','PATHEXT'].flatMap(name=>process.env[name]===undefined ? [] : [[name,process.env[name]]]));
+  child=spawn(path.join(process.env.JAVA_HOME,'bin/java.exe'),['-cp',classpath,'smp.usagi.social.BridgeWireProbe'],{env:{...environment,SOCIAL_TEST_ORIGIN:origin,USAGI_BRIDGE_SECRET:secret,SOCIAL_TEST_ALPHA_ID:alpha},shell:false,windowsHide:true,stdio:['ignore','pipe','pipe']});
   let output='';child.stdout.on('data',b=>{output+=b.toString();});let stderr='';child.stderr.on('data',b=>{stderr+=b.toString();});
   const exit=new Promise(resolve=>child.once('exit',resolve));
   const wait=async predicate=>{const deadline=Date.now()+20000;while(Date.now()<deadline){if(predicate())return;await new Promise(resolve=>setTimeout(resolve,100));}throw new Error('Wire test timed out.');};
@@ -22,4 +23,4 @@ try{
   const code=await exit;if(code!==0||!output.includes('JAVA_BRIDGE_ROUND_TRIP_PASSED'))throw new Error('Java bridge test failed.');
   if(app.store.pending(beta,'minecraft').length)throw new Error('Minecraft acknowledgment was not persisted.');
   console.log('JAVA FORGE BRIDGE TRANSPORT ROUND TRIP PASSED: real SocialClient → HTTP/WebSocket/SQLite → Java BridgeConnection → reply. Test-only identity verifier; in-game player chat not exercised.');
-}finally{if(child&&child.exitCode===null)child.kill();await client.disconnect();await app.close();}
+}finally{if(child&&child.exitCode===null)child.kill();await client.disconnect();await app.close();await fs.rm(folder,{recursive:true,force:true});}

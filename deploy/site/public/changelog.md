@@ -1,5 +1,25 @@
 # Usagi development releases
 
+## 0.5.0 — Discord integrations (Beta)
+
+- Added opt-in Discord Rich Presence in Settings, with preferences saved per
+  Minecraft account, session duration and immediate clearing on disable/exit.
+- Added verified vanilla/modded dimensions, optional events, player count and
+  consenting friend names through the existing authenticated Social bridge.
+- Added explicit Discord account pairing on Account: a backend-issued code,
+  verified Discord claim and approval from the originating Minecraft session.
+- Added signed expiring presence controls, privacy/source expiry, legacy Social
+  capability negotiation and updated server-side integration sources.
+- Preserved existing account storage, Microsoft authentication, installer/updater,
+  visual assets, game data and the Celestials currency. No modpack content included.
+
+Local regression and isolated Electron/Java integration tests cover these flows.
+Rich Presence is off by default. Social and pairing require configured owner
+infrastructure and real-account staging; Minecraft API application approval is
+still pending. Marketplace purchases/sales from Discord remain disabled in the
+separate backend. The installer has no Authenticode certificate; update metadata
+uses the existing owner signing key. This is a Beta development release.
+
 ## 0.4.0 — distribution and updates (Beta)
 
 - Added official Prism staging, permission/privacy review and approval-gated GitHub

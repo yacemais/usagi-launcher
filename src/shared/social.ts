@@ -1,7 +1,9 @@
 import { z } from 'zod';
+import {presencePreferencesSchema,defaultPresencePreferences,type PresencePreferences,type GameObservation} from './presence';
 export const socialName=z.string().trim().regex(/^[A-Za-z0-9_]{3,20}$/);
 const id=z.string().uuid();
 export const socialActionSchema=z.discriminatedUnion('op',[
+  z.object({op:z.literal('capabilities'),features:z.array(z.literal('rich_presence.v1')).max(1)}).strict(),
   z.object({op:z.literal('snapshot')}).strict(),
   z.object({op:z.literal('search'),name:socialName}).strict(),
   z.object({op:z.literal('request'),target:id}).strict(),
@@ -10,7 +12,7 @@ export const socialActionSchema=z.discriminatedUnion('op',[
   z.object({op:z.literal('history'),target:id,before:z.number().int().positive().optional()}).strict(),
   z.object({op:z.literal('read'),target:id,through:z.number().int().positive()}).strict(),
   z.object({op:z.literal('received'),messageId:id}).strict(),
-  z.object({op:z.literal('preferences'),visibility:z.enum(['visible','invisible']),discoverable:z.boolean(),requestsOpen:z.boolean(),notifications:z.boolean()}).strict(),
+  z.object({op:z.literal('preferences'),visibility:z.enum(['visible','invisible']),discoverable:z.boolean(),requestsOpen:z.boolean(),notifications:z.boolean(),presence:presencePreferencesSchema.optional()}).strict(),
   z.object({op:z.literal('rename'),name:socialName}).strict(),
   z.object({op:z.literal('heartbeat')}).strict()
 ]);
@@ -20,10 +22,10 @@ export interface SocialMessage{id:string;seq:number;sender:string;recipient:stri
 export interface SocialSnapshot{
   me:SocialUser;friends:(SocialUser&{unread:number})[];
   requests:{incoming:SocialUser[];outgoing:SocialUser[]};blocked:SocialUser[];
-  preferences:{visibility:'visible'|'invisible';discoverable:boolean;requestsOpen:boolean;notifications:boolean};
+  preferences:{visibility:'visible'|'invisible';discoverable:boolean;requestsOpen:boolean;notifications:boolean;presence?:PresencePreferences};
 }
-export interface SocialState{status:'unconfigured'|'disconnected'|'connecting'|'connected'|'error';message:string;data?:SocialSnapshot;conversations:Record<string,SocialMessage[]>;error?:string}
+export interface SocialState{status:'unconfigured'|'disconnected'|'connecting'|'connected'|'error';message:string;data?:SocialSnapshot;activity?:GameObservation|null;presencePermitted?:boolean;presencePolicyExpiresAt?:number|null;conversations:Record<string,SocialMessage[]>;error?:string}
 export const socialUserSchema=z.object({id,username:z.string().min(1).max(20),minecraftName:z.string().min(1).max(16),presence:z.enum(['offline','launcher','playing'])}).strict();
 export const socialMessageSchema=z.object({id,seq:z.number().int().positive(),sender:id,recipient:id,text:z.string().min(1).max(1000),createdAt:z.number().int().nonnegative(),readAt:z.number().int().nonnegative().nullable()}).strict();
-export const socialSnapshotSchema=z.object({me:socialUserSchema,friends:z.array(socialUserSchema.extend({unread:z.number().int().nonnegative()})).max(250),requests:z.object({incoming:z.array(socialUserSchema).max(250),outgoing:z.array(socialUserSchema).max(250)}).strict(),blocked:z.array(socialUserSchema).max(1000),preferences:z.object({visibility:z.enum(['visible','invisible']),discoverable:z.boolean(),requestsOpen:z.boolean(),notifications:z.boolean()}).strict()}).strict();
+export const socialSnapshotSchema=z.object({me:socialUserSchema,friends:z.array(socialUserSchema.extend({unread:z.number().int().nonnegative()})).max(250),requests:z.object({incoming:z.array(socialUserSchema).max(250),outgoing:z.array(socialUserSchema).max(250)}).strict(),blocked:z.array(socialUserSchema).max(1000),preferences:z.object({visibility:z.enum(['visible','invisible']),discoverable:z.boolean(),requestsOpen:z.boolean(),notifications:z.boolean(),presence:presencePreferencesSchema.default(defaultPresencePreferences)}).strict()}).strict();
 export const emptySocial=():SocialState=>({status:'unconfigured',message:'The Social service has not been configured.',conversations:{}});

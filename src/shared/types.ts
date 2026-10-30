@@ -1,4 +1,6 @@
 import type { SocialAction,SocialState } from './social';
+import type {PresencePreferences,PresenceState} from './presence';
+import type {PairingAction,PairingResult} from './pairing';
 export type Page = 'home'|'news'|'updates'|'settings'|'account'|'social';
 export interface Settings {
   ramMb:number; width:number; height:number; fullscreen:boolean; gameDirectory:string; javaPath:string;
@@ -17,6 +19,7 @@ export interface Progress { phase:string; file:string; downloaded:number; total:
 export interface ServerStatus { state:'unconfigured'|'checking'|'online'|'offline'; online?:number; max?:number; version?:string; checkedAt?:string; lastSuccess?:string; error?:string }
 export interface NewsItem { id:string; title:string; date:string; summary:string; content?:string; url?:string; image?:string }
 export interface Snapshot {
+  discordPresence?:{preferences:PresencePreferences;status:PresenceState};
   updateNotices?:UpdateNotice[]; packNotes?:string; requiredLauncherVersion?:string; packSyncedAt?:string; packFeedStatus?:'published'|'empty';
   social?:SocialState;
   settings:Settings; totalRamMb:number; maxRamMb:number; profiles:Profile[]; selectedAccount?:string; authBusy:boolean;
@@ -28,6 +31,8 @@ export interface Snapshot {
 }
 export interface UpdateNotice {id:string;subject:'launcher'|'modpack';kind:'available'|'compatibility'|'complete'|'failure';current?:string;version?:string;message:string;at:string;dismissed:boolean}
 export type Command =
+  | {type:'discord.pairing';action:PairingAction}
+  | {type:'presence.preferences';preferences:PresencePreferences}
   | {type:'startup.visibility'}
   | {type:'social.connect'} | {type:'social.disconnect'} | {type:'social.action';action:SocialAction}
   | {type:'snapshot'} | {type:'settings.save'; settings:Settings} | {type:'directory.choose'} | {type:'java.choose'}
@@ -37,5 +42,5 @@ export type Command =
   | {type:'updates.checkAll'} | {type:'updates.dismiss';id:string}
   | {type:'server.refresh'} | {type:'news.refresh'} | {type:'external.open'; url:string}
   | {type:'folder.open'; folder:'logs'|'game'|'crashes'} | {type:'window'; action:'minimize'|'maximize'|'close'};
-export type Response = {ok:true; state?:Snapshot; path?:string;socialResult?:unknown;visible?:boolean} | {ok:false; error:string};
+export type Response = {ok:true; state?:Snapshot; path?:string;socialResult?:unknown;pairing?:PairingResult;visible?:boolean} | {ok:false; error:string};
 export interface LauncherApi { request(command:Command):Promise<Response>; subscribe(listener:(state:Snapshot)=>void):()=>void }

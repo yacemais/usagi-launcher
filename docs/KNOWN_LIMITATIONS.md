@@ -17,12 +17,18 @@
   saved-account refresh/logout, account switching or authenticated game launch can
   be verified. Windows credential protection was tested separately. Unit fixtures
   cover orchestration and entitlement rejection; they do not bypass this live denial.
-- Version 0.4.0 is a Beta launcher preview, with independent distribution/update
+- Version 0.5.0 is a Beta launcher preview, with independent distribution/update
   tools. Both verification public keys are configured; private keys stay local.
   No production modpack release
   or game-server address is available. The Prism source is staged and embedded
   licenses inspected, but exact redistribution/client/privacy review still blocks
   publication. See MODPACK_AUDIT.md and MODPACK_DISTRIBUTION.md.
+- Discord Rich Presence is opt-in. Verified dimensions/events/counts require the
+  updated Social owner and Forge bridge; public artwork keys are not fabricated.
+  Account pairing requires the separately configured Discord backend and approval
+  from the same verified Minecraft session. Installer publication does not deploy
+  those services or register Discord commands. Live identity/presence staging and
+  server-authoritative marketplace transaction validation remain separate gates.
 - Windows Java 17 on this host cannot start from a path containing the character 雪
   and loses this character in command-line classpaths. Official downloaded files
   were hash-verified and the same runtime worked at an ASCII path. Use an ASCII

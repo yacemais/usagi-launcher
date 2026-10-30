@@ -1,6 +1,6 @@
 {
   "name": "usagi-launcher",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Usagi SMP launcher for Windows",
   "author": "Usagi SMP",
@@ -19,8 +19,10 @@
     "test": "vitest run",
     "test:gui": "node tools/gui-test.mjs",
     "test:startup": "node tools/startup-test.mjs",
+    "test:presence-gui": "node tools/presence-gui-test.mjs",
     "test:social-gui": "node tools/social-gui-test.mjs",
     "test:forge-wire": "node tools/social-forge-wire-test.mjs",
+    "test:presence-forge-wire": "node tools/presence-forge-wire-test.mjs",
     "build:social": "node tools/build-social.mjs",
     "package:dir": "npm run build && electron-builder --win --x64 --dir --publish never",
     "package:win": "npm run build && electron-builder --win nsis --x64 --publish never"

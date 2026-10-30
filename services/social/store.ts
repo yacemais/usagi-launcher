@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
 import type { SocialUser,SocialSnapshot,SocialMessage,SocialAction } from '../../src/shared/social';
+import {defaultPresencePreferences,presencePreferencesSchema,type PresencePreferences} from '../../src/shared/presence';
 export class SocialError extends Error{constructor(readonly code:string,message:string){super(message);}}
 type Row=Record<string,any>;
 export class SocialStore{
@@ -20,6 +21,7 @@ export class SocialStore{
       CREATE INDEX IF NOT EXISTS minecraft_names ON users(minecraft_name COLLATE NOCASE);
       CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),expires INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS leases(connection TEXT NOT NULL,user_id TEXT NOT NULL REFERENCES users(id),source TEXT NOT NULL,expires INTEGER NOT NULL,PRIMARY KEY(connection,user_id));
+      CREATE TABLE IF NOT EXISTS presence_preferences(user_id TEXT PRIMARY KEY REFERENCES users(id),json TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS leases_user ON leases(user_id,expires,source);
       PRAGMA user_version=1;`);
     this.db.exec('DELETE FROM leases');
@@ -37,6 +39,7 @@ export class SocialStore{
     this.run('INSERT INTO users(id,uuid,minecraft_name,username) VALUES(?,?,?,?)',id,uuid.toLowerCase(),name,username);return id;
   }
   user(id:string):Row{const u=this.row('SELECT * FROM users WHERE id=?',id);if(!u)throw new SocialError('not_found','User not found.');return u;}
+  presencePreferences(id:string):PresencePreferences {const row=this.row('SELECT json FROM presence_preferences WHERE user_id=?',id);return row ? presencePreferencesSchema.parse(JSON.parse(row.json)) : defaultPresencePreferences();}
   publicUser(id:string,viewer:string):SocialUser{const u=this.user(id);const hidden=id!==viewer&&(u.visibility==='invisible'||this.relationship(id,viewer)?.status!=='accepted');const source=hidden?undefined:this.row('SELECT source FROM leases WHERE user_id=? AND expires>? ORDER BY source DESC LIMIT 1',id,this.now())?.source;return {id,username:u.username,minecraftName:u.minecraft_name,presence:source==='playing'?'playing':source==='launcher'?'launcher':'offline'};}
   pair(a:string,b:string){if(a===b)throw new SocialError('self','Choose another user.');return [a,b].sort();}
   blocked(a:string,b:string){return !!this.row('SELECT 1 FROM blocks WHERE (owner=? AND target=?) OR (owner=? AND target=?)',a,b,b,a);}
@@ -46,16 +49,17 @@ export class SocialStore{
   snapshot(id:string):SocialSnapshot{
     const u=this.user(id),relations=this.rows('SELECT *,CASE WHEN a=? THEN b ELSE a END AS target FROM friends WHERE a=? OR b=?',id,id,id);
     const unread=(target:string)=>Number(this.row('SELECT COUNT(*) n FROM messages WHERE sender=? AND recipient=? AND read_at IS NULL',target,id)?.n||0);
-    return {me:this.publicUser(id,id),friends:relations.filter(r=>r.status==='accepted').map(r=>({...this.publicUser(r.target,id),unread:unread(r.target)})),requests:{incoming:relations.filter(r=>r.status==='pending'&&r.requester!==id).map(r=>this.publicUser(r.target,id)),outgoing:relations.filter(r=>r.status==='pending'&&r.requester===id).map(r=>this.publicUser(r.target,id))},blocked:this.rows('SELECT target FROM blocks WHERE owner=?',id).map(r=>this.publicUser(r.target,id)),preferences:{visibility:u.visibility,discoverable:!!u.discoverable,requestsOpen:!!u.requests_open,notifications:!!u.notifications}};
+    return {me:this.publicUser(id,id),friends:relations.filter(r=>r.status==='accepted').map(r=>({...this.publicUser(r.target,id),unread:unread(r.target)})),requests:{incoming:relations.filter(r=>r.status==='pending'&&r.requester!==id).map(r=>this.publicUser(r.target,id)),outgoing:relations.filter(r=>r.status==='pending'&&r.requester===id).map(r=>this.publicUser(r.target,id))},blocked:this.rows('SELECT target FROM blocks WHERE owner=?',id).map(r=>this.publicUser(r.target,id)),preferences:{visibility:u.visibility,discoverable:!!u.discoverable,requestsOpen:!!u.requests_open,notifications:!!u.notifications,presence:this.presencePreferences(id)}};
   }
   search(id:string,name:string){return this.rows('SELECT id FROM users WHERE id<>? AND discoverable=1 AND (username=? COLLATE NOCASE OR minecraft_name=? COLLATE NOCASE) LIMIT 5',id,name,name).filter(r=>!this.blocked(id,r.id)).map(r=>this.publicUser(r.id,id));}
   action(id:string,action:SocialAction):unknown{
     this.user(id);
+    if(action.op==='capabilities')throw new SocialError('operation','Capabilities are connection-scoped.');
     if(action.op==='snapshot')return this.snapshot(id);
     if(action.op==='heartbeat')return {};
     if(action.op==='search')return this.search(id,action.name);
     if(action.op==='rename'){try{this.run('UPDATE users SET username=? WHERE id=?',action.name,id);}catch{throw new SocialError('username','That Usagi username is unavailable.');}return this.snapshot(id);}
-    if(action.op==='preferences'){this.run('UPDATE users SET visibility=?,discoverable=?,requests_open=?,notifications=? WHERE id=?',action.visibility,+action.discoverable,+action.requestsOpen,+action.notifications,id);return this.snapshot(id);}
+    if(action.op==='preferences'){return this.transaction(()=>{this.run('UPDATE users SET visibility=?,discoverable=?,requests_open=?,notifications=? WHERE id=?',action.visibility,+action.discoverable,+action.requestsOpen,+action.notifications,id);if(action.presence)this.run('INSERT INTO presence_preferences VALUES (?,?) ON CONFLICT(user_id) DO UPDATE SET json=excluded.json',id,JSON.stringify(action.presence));return this.snapshot(id);});}
     if(action.op==='received'){this.run('UPDATE messages SET launcher_ack=1 WHERE id=? AND recipient=?',action.messageId,id);return {};}
     const target=action.target;this.user(target);this.pair(id,target);
     if(action.op==='unblock'){this.run('DELETE FROM blocks WHERE owner=? AND target=?',id,target);return {};}

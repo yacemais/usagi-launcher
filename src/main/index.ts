@@ -11,6 +11,7 @@ import { loadProduct } from './config/product';
 import { AppUpdates } from './app-updates/service';
 import { microsoftBrowserUrl } from './authentication/browser';
 import { SocialClient } from './social/client';
+import {LauncherPresence} from './presence/launcher';
 import { UpdateCenter } from './updates/center';
 import { windowIdentity,windowIcon } from './config/window-icon';
 app.setName('Usagi');
@@ -26,6 +27,7 @@ app.enableSandbox();
 let window:BrowserWindow|undefined,controller:Controller|undefined,appUpdates:AppUpdates|undefined,closing=false,lastNotice='';
 let lastErrorNotice='';
 let updateCenter:UpdateCenter|undefined;
+let presence:LauncherPresence|undefined;
 const configuredDevUrl=process.env.USAGI_DEV_URL||process.env.CELESTIA_DEV_URL;
 const devUrl=!app.isPackaged && configuredDevUrl==='http://127.0.0.1:5173'?configuredDevUrl:undefined;
 const csp=`default-src 'none'; script-src 'self'; style-src 'self'${devUrl?" 'unsafe-inline'":''}; img-src 'self' data:; font-src 'self'; connect-src ${devUrl?'http://127.0.0.1:5173 ws://127.0.0.1:5173':"'none'"}; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'`;
@@ -39,7 +41,7 @@ else app.whenReady().then(async()=>{
   });
   session.defaultSession.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));session.defaultSession.setPermissionCheckHandler(()=>false);
   session.defaultSession.webRequest.onHeadersReceived((details,callback)=>callback({responseHeaders:{...details.responseHeaders,'Content-Security-Policy':[csp]}}));
-  controller=new Controller(app.getPath('userData'),{available:async()=>await safeStorage.isAsyncEncryptionAvailable() && (process.platform!=='linux' || safeStorage.getSelectedStorageBackend()!=='basic_text'),encrypt:v=>safeStorage.encryptStringAsync(v),decrypt:async v=>(await safeStorage.decryptStringAsync(v)).result},state=>{updateCenter?.observe(state);state.updateNotices=updateCenter?.notices;if(window && !window.isDestroyed())window.webContents.send('celestia:state',state);if(state.error&&state.error!==lastErrorNotice){lastErrorNotice=state.error;if(state.phase!=='playing'&&state.settings.notifications&&Notification.isSupported()&&!updateCenter?.notices.some(n=>n.kind==='failure'&&n.message===state.error))new Notification({title:'Usagi',body:state.error}).show();}const notice=state.gameExit?.at || '';if(notice && notice!==lastNotice){lastNotice=notice;if(state.settings.notifications && Notification.isSupported())new Notification({title:'Usagi',body:state.message}).show();void updateCenter?.check().catch(error=>controller?.log.write(String(error)));}},async url=>{
+  controller=new Controller(app.getPath('userData'),{available:async()=>await safeStorage.isAsyncEncryptionAvailable() && (process.platform!=='linux' || safeStorage.getSelectedStorageBackend()!=='basic_text'),encrypt:v=>safeStorage.encryptStringAsync(v),decrypt:async v=>(await safeStorage.decryptStringAsync(v)).result},state=>{presence?.observe(state);state.discordPresence=presence?.state;updateCenter?.observe(state);state.updateNotices=updateCenter?.notices;if(window && !window.isDestroyed())window.webContents.send('celestia:state',state);if(state.error&&state.error!==lastErrorNotice){lastErrorNotice=state.error;if(state.phase!=='playing'&&state.settings.notifications&&Notification.isSupported()&&!updateCenter?.notices.some(n=>n.kind==='failure'&&n.message===state.error))new Notification({title:'Usagi',body:state.error}).show();}const notice=state.gameExit?.at || '';if(notice && notice!==lastNotice){lastNotice=notice;if(state.settings.notifications && Notification.isSupported())new Notification({title:'Usagi',body:state.message}).show();void updateCenter?.check().catch(error=>controller?.log.write(String(error)));}},async url=>{
     const u=new URL(url);if(u.hostname!=='textures.minecraft.net' || u.protocol!=='https:')return undefined;const bytes=await limitedBytes(await secureFetch(u.href),2*1024*1024);const image=nativeImage.createFromBuffer(bytes);if(image.isEmpty() || image.getSize().width<16)return undefined;return image.crop({x:8,y:8,width:8,height:8}).toDataURL();
   },async url=>shell.openExternal(microsoftBrowserUrl(url)),product);
   appUpdates=new AppUpdates(path.join(app.getPath('userData'),'launcher-updates'),product.launcherUpdates,{version:app.getVersion(),name:'Usagi',isPackaged:app.isPackaged,appUpdateConfigPath:path.join(app.getAppPath(),'config/app-update.yml'),userDataPath:app.getPath('userData'),baseCachePath:path.join(app.getPath('userData'),'launcher-updates'),whenReady:async()=>{await app.whenReady();},relaunch:()=>app.relaunch(),quit:()=>{if(appUpdates?.state.phase==='installing')app.quit();},onQuit:handler=>app.on('quit',(_event,code)=>handler(code))},controller.log,()=>{controller!.state.appUpdate=appUpdates!.state;controller!.emit();},()=>controller!.state.phase==='idle'&&!controller!.accounts.busy);
@@ -51,6 +53,11 @@ else app.whenReady().then(async()=>{
   app.once('before-quit',event=>{event.preventDefault();void updateCenter!.settled().catch(error=>controller!.log.write('Notification history could not be saved: '+String(error))).finally(()=>app.quit());});
   const social=new SocialClient(product.social.baseUrl,()=>controller!.accounts.session(),()=>{controller!.state.social=social.state;controller!.emit();},message=>{if(controller!.settings.value.notifications&&Notification.isSupported())new Notification({title:'Usagi Social',body:message}).show();});
   controller.state.social=social.state;
+  const testPipe=!app.isPackaged&&uiTest&&testRoot ? process.env.USAGI_TEST_DISCORD_IPC : undefined;
+  if(testPipe && !(process.platform==='win32' ? testPipe.startsWith('\\\\?\\pipe\\usagi-presence-test-') : testPipe.startsWith(path.join(os.tmpdir(),'usagi-presence-test-'))))throw new Error('Invalid isolated Discord IPC test path.');
+  presence=new LauncherPresence(app.getPath('userData'),()=>{if(controller&&presence){controller.state.discordPresence=presence.state;controller.emit();}},()=>social,product.presenceAssets,testPipe ? {paths:()=>[testPipe]} : undefined);
+  controller.state.discordPresence=presence.state;await presence.initialise();
+  app.on('before-quit',()=>presence?.close());
   app.on('before-quit',()=>{void social.disconnect(false);});
   const iconPath=windowIcon(app.getAppPath(),process.resourcesPath,app.isPackaged);
   window=new BrowserWindow({width:1200,height:760,minWidth:960,minHeight:620,frame:false,backgroundColor:'#262225',show:false,title:'Usagi',icon:iconPath,webPreferences:{preload:path.resolve(__dirname,'../preload/index.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true,allowRunningInsecureContent:false}});
@@ -69,6 +76,8 @@ else app.whenReady().then(async()=>{
       if(parsed.type==='settings.save'&&appUpdates?.busy)throw new Error('Finish the Usagi update operation before changing settings.');
       switch(parsed.type) {
         case 'startup.visibility':return {ok:true,visible:window.isVisible()&&!window.isMinimized()};
+        case 'presence.preferences':await presence!.configure(parsed.preferences);break;
+        case 'discord.pairing':return {ok:true,pairing:await social.pairing(parsed.action)};
         case 'social.connect':await social.connect();break;
         case 'social.disconnect':await social.disconnect();break;
         case 'social.action':return {ok:true,socialResult:await social.action(parsed.action),state:c.snapshot()};

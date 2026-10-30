@@ -1,10 +1,10 @@
 # Usagi
 
 Usagi is the Windows launcher for Usagi SMP: **Minecraft 1.20.1, Forge 47.4.28,
-Java 17**. Development preview **0.4.0 (Beta)** continues the existing launcher; the project directory,
+Java 17**. Development preview **0.5.0 (Beta)** continues the existing launcher; the project directory,
 game installer, signed modpack updates and protected player data remain in place.
 
-[Download the 0.4.0 Beta preview](https://github.com/yacemais/usagi-launcher/releases/tag/launcher-v0.4.0).
+[Download the 0.5.0 Beta preview](https://github.com/yacemais/usagi-launcher/releases/tag/launcher-v0.5.0).
 The release includes the Windows installer, complete unpacked folder and source.
 Version 0.3.1 fixes startup timing. The unchanged Social backend and Forge bridge
 remain available in [0.3.0](https://github.com/yacemais/usagi-launcher/releases/tag/v0.3.0).
@@ -20,6 +20,14 @@ the decorative sky layout with warm charcoal surfaces, dusty pink controls and a
 compact account/navigation layout. No AI-generated imagery or branding is used.
 
 ## Current status
+
+- Version 0.5.0 adds opt-in Discord Rich Presence with account-scoped privacy,
+  actual server dimension/session observations and expiring emergency policy.
+  Account now supports backend-issued Discord pairing with explicit confirmation
+  from the originating verified Minecraft session. Both integrations are tested
+  locally; live Social/backend deployment, Minecraft application approval and
+  real-account staging remain necessary. Publishing this Launcher does not enable
+  marketplace writes or deploy the separate Discord backend.
 
 - Version 0.4.0 adds Prism staging, independently versioned GitHub modpack releases,
   automatic synchronization, 15-minute checks and persistent update notifications.
@@ -112,6 +120,16 @@ without resetting the game folder; the new release channel defaults to stable.
 Prism, Celestia Shop and SMP quest files are not modified.
 
 ## Documentation
+
+Discord account linking is available on Account → Link Discord through the
+configured Social owner. A backend-issued code, verified Discord claim and
+explicit Launcher approval are required. See [account linking](docs/DISCORD-ACCOUNT-LINKING.md).
+
+Discord Rich Presence is available under Settings → Discord activity, off by
+default and scoped per Minecraft account. It uses the official application ID
+and local Discord IPC without a bot token. Dimensions/events/counts come from
+the authenticated Social bridge; player names require mutual consent. See
+[Discord activity setup, privacy and testing](docs/DISCORD-PRESENCE.md).
 
 - [Installation](docs/INSTALLATION.md) and [configuration](docs/CONFIGURATION.md)
 - [Microsoft authentication setup and limitations](docs/MICROSOFT_AUTH.md)

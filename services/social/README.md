@@ -19,3 +19,14 @@ The bundle includes FORGE-INSTALL.md; relative source links in those documents r
 to the complete source archive. No infrastructure is provisioned by this
 bundle and no production URL has been invented. ws is MIT licensed; WS-LICENSE.txt
 is included. Bundled Zod is MIT; see ZOD-LICENSE.txt.
+
+## Launcher Discord pairing
+
+The optional `POST /v1/discord/pairing` route uses a verified Minecraft Social
+session. It derives UUID/session binding server-side and delegates only strict
+pairing actions to the Usagi backend. Configure `USAGI_DISCORD_BACKEND_URL`,
+`USAGI_DISCORD_CONTROL_GUILD_ID`, `NODE_ENV` and the existing dedicated
+`USAGI_DISCORD_GATEWAY_SECRET` on this owner. The backend independently checks
+the HMAC audience/path, guild/environment, time, nonce and request schema.
+Production requires HTTPS; no bot token belongs here. Keep economy writes disabled.
+See `../../docs/DISCORD-ACCOUNT-LINKING.md` for setup and staging limits.

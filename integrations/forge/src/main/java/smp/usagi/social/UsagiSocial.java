@@ -27,6 +27,7 @@ public final class UsagiSocial {
     private static final Logger LOG = LogUtils.getLogger();
     private final Map<UUID, String> replyTo = new HashMap<>();
     private final Map<UUID, Long> commandTimes = new HashMap<>();
+    private final Map<UUID, Long> joinedAt = new HashMap<>();
     private BridgeConnection bridge;
     private MinecraftServer server;
     private Receipts receipts;
@@ -44,18 +45,19 @@ public final class UsagiSocial {
             bridge.start();
         } catch (Exception error) { LOG.error("Usagi Social configuration or receipt storage is invalid. Bridge was not started."); }
     }
-    @SubscribeEvent public void stopping(ServerStoppingEvent event) { if (bridge != null) bridge.close(); bridge = null; server = null; replyTo.clear(); commandTimes.clear(); }
-    @SubscribeEvent public void login(PlayerEvent.PlayerLoggedInEvent event) { if (event.getEntity() instanceof ServerPlayer) players(null); }
-    @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event) { players(event.getEntity().getUUID()); replyTo.remove(event.getEntity().getUUID()); commandTimes.remove(event.getEntity().getUUID()); }
-    @SubscribeEvent public void tick(TickEvent.ServerTickEvent event) { if (event.phase == TickEvent.Phase.END && ++ticks % 300 == 0) players(null); }
+    @SubscribeEvent public void stopping(ServerStoppingEvent event) { if (bridge != null) bridge.close(); bridge = null; server = null; replyTo.clear(); commandTimes.clear(); joinedAt.clear(); }
+    @SubscribeEvent public void login(PlayerEvent.PlayerLoggedInEvent event) { if (event.getEntity() instanceof ServerPlayer) {joinedAt.put(event.getEntity().getUUID(), System.currentTimeMillis());players(null);} }
+    @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event) { if (event.getEntity() instanceof ServerPlayer) players(null); }
+    @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event) { players(event.getEntity().getUUID()); replyTo.remove(event.getEntity().getUUID()); commandTimes.remove(event.getEntity().getUUID()); joinedAt.remove(event.getEntity().getUUID()); }
+    @SubscribeEvent public void tick(TickEvent.ServerTickEvent event) { if (event.phase == TickEvent.Phase.END && ++ticks % 100 == 0) players(null); }
     private void players(UUID exclude) {
         if (server == null || bridge == null || !bridge.connected()) return;
         JsonArray list = new JsonArray();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             if (player.getUUID().equals(exclude)) continue;
-            JsonObject value = new JsonObject(); value.addProperty("uuid", player.getUUID().toString().replace("-", "")); value.addProperty("name", player.getGameProfile().getName()); list.add(value);
+            JsonObject value = new JsonObject(); value.addProperty("uuid", player.getUUID().toString().replace("-", "")); value.addProperty("name", player.getGameProfile().getName());value.addProperty("dimension", player.serverLevel().dimension().location().toString());value.addProperty("joinedAt", joinedAt.computeIfAbsent(player.getUUID(), ignored -> System.currentTimeMillis()));list.add(value);
         }
-        bridge.players(list);
+        bridge.players(list, PresenceEvents.current());
     }
     private void delivery(JsonObject value) {
         if (server == null || bridge == null || !value.has("event") || !"minecraft.message".equals(value.get("event").getAsString())) return;

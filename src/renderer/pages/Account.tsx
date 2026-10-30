@@ -1,6 +1,7 @@
 import { Check,ExternalLink as LinkIcon,LogIn,LogOut,ShieldCheck,UserRound } from 'lucide-react';
 import type { Page,Snapshot } from '../../shared/types';
 import { Empty,ExternalLink,PageHeader,type Request } from '../components/ui';
+import {DiscordPairing} from '../components/DiscordPairing';
 export function Account({state,request,navigate}:{state:Snapshot;request:Request;navigate:(p:Page)=>void}){
   return <div className="standard-page"><PageHeader eyebrow="ACCOUNT" title="Minecraft account" description="Sign in with the Microsoft account that owns Minecraft Java Edition."/>
     <section className="account-panel"><div className="account-intro"><ShieldCheck size={24}/><div><h2>Continue in your browser</h2><p>Your password stays on Microsoft’s website. Usagi verifies Xbox access, Java ownership and your Minecraft profile before saving the account.</p></div></div>
@@ -8,5 +9,6 @@ export function Account({state,request,navigate}:{state:Snapshot;request:Request
     {state.authBusy&&<button className="secondary-button cancel-auth" onClick={()=>void request({type:'auth.cancel'})}>Cancel sign-in</button>}
     <div className="account-list">{state.profiles.map(profile=><div className="account-row" key={profile.accountId}>{profile.avatar?<img src={profile.avatar} alt="Your Minecraft skin head"/>:<span className="avatar-fallback"><UserRound size={20}/></span>}<div><strong>{profile.name}</strong><span>{profile.accountId===state.selectedAccount?'Selected account':'Saved Microsoft account'}</span></div>{profile.accountId!==state.selectedAccount?<button className="secondary-button" disabled={state.phase!=='idle'||state.authBusy} onClick={()=>void request({type:'auth.select',accountId:profile.accountId})}>Select</button>:<Check className="positive" size={20}/>}<button className="icon-button" aria-label={'Sign out '+profile.name} disabled={state.phase!=='idle'||state.authBusy} onClick={()=>void request({type:'auth.logout',accountId:profile.accountId})}><LogOut size={17}/></button></div>)}</div>
     </section><p className="quiet-note">Saved sign-in data is encrypted with Windows credential protection. Sign out removes this launcher’s local saved account.</p>
+    <DiscordPairing key={state.selectedAccount ?? 'signed-out'} state={state} request={request}/>
   </div>;
 }

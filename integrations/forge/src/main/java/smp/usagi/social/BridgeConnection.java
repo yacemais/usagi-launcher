@@ -29,6 +29,7 @@ public final class BridgeConnection implements WebSocket.Listener, AutoCloseable
     private final StringBuilder buffer = new StringBuilder();
     private volatile WebSocket socket;
     private volatile boolean connected;
+    private volatile boolean presenceCapable;
     private volatile boolean closed;
     private boolean retryScheduled;
     private CompletableFuture<Void> sendQueue = CompletableFuture.completedFuture(null);
@@ -58,7 +59,7 @@ public final class BridgeConnection implements WebSocket.Listener, AutoCloseable
         if (!closed && !retryScheduled) { retryScheduled = true; worker.schedule(this::connect, Math.min(30, 1 << Math.min(attempts++, 5)), TimeUnit.SECONDS); }
     }
     @Override public void onOpen(WebSocket webSocket) {
-        socket = webSocket; buffer.setLength(0); sendQueue = CompletableFuture.completedFuture(null);
+        socket = webSocket;presenceCapable = false;buffer.setLength(0); sendQueue = CompletableFuture.completedFuture(null);
         JsonObject auth = new JsonObject(); auth.addProperty("type", "authenticate"); auth.addProperty("role", "server"); auth.addProperty("token", secret);
         webSocket.sendText(auth.toString(), true); webSocket.request(1);
     }
@@ -69,7 +70,7 @@ public final class BridgeConnection implements WebSocket.Listener, AutoCloseable
             try {
                 JsonObject value = JsonParser.parseString(buffer.toString()).getAsJsonObject();
                 if (value.has("event")) {
-                    if ("ready".equals(value.get("event").getAsString())) { connected = true; attempts = 0; ready.run(); }
+                    if ("ready".equals(value.get("event").getAsString())) { connected = true; attempts = 0; negotiatePresence(); }
                     else event.accept(value);
                 } else if (value.has("id")) {
                     CompletableFuture<JsonObject> future = pending.remove(value.get("id").getAsString());
@@ -99,7 +100,24 @@ public final class BridgeConnection implements WebSocket.Listener, AutoCloseable
     public CompletableFuture<JsonObject> command(UUID player, JsonObject action) {
         JsonObject request = new JsonObject(); request.addProperty("op", "command"); request.addProperty("uuid", player.toString().replace("-", "")); request.add("action", action); return request(request);
     }
-    public void players(JsonArray players) { JsonObject action = new JsonObject(); action.addProperty("op", "players"); action.add("players", players); request(action).exceptionally(error -> null); }
+    private void negotiatePresence() {
+        WebSocket active = socket;JsonObject action = new JsonObject();action.addProperty("op", "capabilities");JsonArray features = new JsonArray();features.add("rich_presence.v1");action.add("features", features);
+        request(action).whenComplete((result, error) -> {
+            if (closed || !connected || socket != active) return;
+            presenceCapable = false;
+            if (error == null) try {for (var feature : result.getAsJsonObject("data").getAsJsonArray("features")) if ("rich_presence.v1".equals(feature.getAsString())) presenceCapable = true;} catch (Exception ignored) {}
+            ready.run();
+        });
+    }
+    public void players(JsonArray players) { players(players, null); }
+    public void players(JsonArray players, JsonObject event) { playerSnapshot(players, event).exceptionally(error -> null); }
+    public CompletableFuture<JsonObject> playerSnapshot(JsonArray players, JsonObject event) {
+        boolean metadata = presenceCapable;WebSocket active = socket;
+        JsonArray payload = players;
+        if (!metadata) {payload = new JsonArray();for (var raw : players) {JsonObject legacy = new JsonObject();legacy.add("uuid", raw.getAsJsonObject().get("uuid"));legacy.add("name", raw.getAsJsonObject().get("name"));payload.add(legacy);}}
+        JsonObject action = new JsonObject();action.addProperty("op", "players");action.add("players", payload);if (metadata && event != null) action.add("event", event);
+        return request(action).exceptionallyCompose(error -> {if (!metadata || socket != active) return CompletableFuture.failedFuture(error);presenceCapable = false;return playerSnapshot(players, null);});
+    }
     public void acknowledge(String uuid, String id) { JsonObject action = new JsonObject(); action.addProperty("op", "ack"); action.addProperty("uuid", uuid); action.addProperty("messageId", id); request(action).exceptionally(error -> null); }
     @Override public void close() { closed = true; connected = false; if (socket != null) socket.abort(); pending.values().forEach(f -> f.cancel(false)); pending.clear(); worker.shutdownNow(); }
 }

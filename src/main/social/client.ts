@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import {gameObservationSchema} from '../../shared/presence';
+import {pairingActionSchema,pairingResultSchema,type PairingAction,type PairingResult} from '../../shared/pairing';
 import { emptySocial,socialSnapshotSchema,socialMessageSchema,socialUserSchema,type SocialAction,type SocialMessage,type SocialState } from '../../shared/social';
 export class SocialClient{
   state:SocialState=emptySocial();private socket?:WebSocket;private token?:string;private expiry=0;private retry?:ReturnType<typeof setTimeout>;private heartbeat?:ReturnType<typeof setInterval>;private generation=0;private attempts=0;private stopped=true;
@@ -26,8 +28,9 @@ export class SocialClient{
         socket.addEventListener('open',()=>{if(generation!==this.generation||this.stopped){socket.close();return;}socket.send(JSON.stringify({type:'authenticate',role:'launcher',token:this.token}));});
         socket.addEventListener('message',event=>{if(generation!==this.generation)return;try{
           if(typeof event.data!=='string'||event.data.length>512000)throw new Error('Invalid Social response.');const value=JSON.parse(event.data);
-          if(value.event==='ready'){ready=true;clearTimeout(timeout);this.attempts=0;this.state.status='connected';this.state.message='Connected';this.emit();this.heartbeat=setInterval(()=>void this.action({op:'heartbeat'}).catch(()=>{}),20000);resolve();}
+          if(value.event==='ready'){ready=true;clearTimeout(timeout);this.attempts=0;this.state.status='connected';this.state.message='Connected';this.emit();this.heartbeat=setInterval(()=>void this.action({op:'heartbeat'}).catch(()=>{}),20000);void this.action({op:'capabilities',features:['rich_presence.v1']}).catch(()=>{});resolve();}
           else if(value.event==='snapshot'){this.state.data=socialSnapshotSchema.parse(value.data);this.emit();}
+          else if(value.event==='activity'){this.state.activity=value.data===null ? null : gameObservationSchema.parse(value.data);this.state.presencePermitted=value.permitted===true;this.state.presencePolicyExpiresAt=value.policyExpiresAt===null ? null : z.number().int().nonnegative().parse(value.policyExpiresAt);this.emit();}
           else if(value.event==='message'){this.receive(socialMessageSchema.parse(value.message));}
           else if(typeof value.id==='string'){
             const pending=this.pending.get(value.id);if(!pending)return;this.pending.delete(value.id);clearTimeout(pending.timer);if(value.ok===true)pending.resolve(value.data);else pending.reject(new Error(typeof value.error==='string'?value.error.slice(0,400):'Social request failed.'));
@@ -40,7 +43,7 @@ export class SocialClient{
           if(!ready)reject(new Error('Social session was rejected or interrupted.'));
           if(generation!==this.generation||this.stopped)return;
           if(this.heartbeat)clearInterval(this.heartbeat);for(const work of this.pending.values()){clearTimeout(work.timer);work.reject(new Error('Connection interrupted. Retry with the same message request.'));}this.pending.clear();
-          this.state.status='disconnected';this.state.message='Reconnecting to Social…';this.emit();this.retry=setTimeout(()=>{this.connecting=this.open(generation).finally(()=>{this.connecting=undefined;});void this.connecting.catch(()=>{});},Math.min(30000,1000*2**Math.min(this.attempts++,5))+Math.random()*300);
+          this.state.status='disconnected';this.state.activity=null;this.state.presencePermitted=false;this.state.message='Reconnecting to Social…';this.emit();this.retry=setTimeout(()=>{this.connecting=this.open(generation).finally(()=>{this.connecting=undefined;});void this.connecting.catch(()=>{});},Math.min(30000,1000*2**Math.min(this.attempts++,5))+Math.random()*300);
         });
       });
     }catch(error){if(generation===this.generation){this.state.status='error';this.state.error=error instanceof Error?error.message:'Social connection failed.';this.state.message=this.state.error;this.emit();}throw error;}
@@ -59,6 +62,17 @@ export class SocialClient{
     if(action.op==='message')this.merge(action.target,[socialMessageSchema.parse(result)]);
     if(action.op==='search')return z.array(socialUserSchema).max(5).parse(result);
     return result;
+  }
+  async pairing(input:PairingAction):Promise<PairingResult> {
+    const action=pairingActionSchema.parse(input),generation=this.generation,token=this.token;
+    if(this.state.status!=='connected' || !token || this.expiry<=Date.now())throw new Error('Connect to Social with your Minecraft account first.');
+    let response:Response;
+    try {response=await fetch(new URL('/v1/discord/pairing',this.endpoint),{method:'POST',headers:{'content-type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(action),redirect:'error',signal:AbortSignal.timeout(8000)});}catch {throw new Error('Account linking is unavailable. Refresh its status before retrying.');}
+    if(generation!==this.generation || this.token!==token){await response.body?.cancel();throw new Error('The account changed. Start linking again.');}
+    if(!response.ok){await response.body?.cancel();throw new Error('Account linking was refused or is unavailable. Reconnect to Social and generate a new code if needed.');}
+    const text=await response.text();if(text.length>4096)throw new Error('Invalid account linking response.');
+    if(generation!==this.generation || this.token!==token)throw new Error('The account changed. Start linking again.');
+    return pairingResultSchema.parse(JSON.parse(text));
   }
   async disconnect(revoke=true){this.stopped=true;this.generation++;if(this.retry)clearTimeout(this.retry);if(this.heartbeat)clearInterval(this.heartbeat);for(const work of this.pending.values()){clearTimeout(work.timer);work.reject(new Error('Social disconnected.'));}this.pending.clear();this.socket?.close();this.socket=undefined;const token=this.token;this.token=undefined;this.expiry=0;this.seen.clear();this.state={...emptySocial(),status:this.endpoint?'disconnected':'unconfigured',message:this.endpoint?'Connect with your verified Minecraft account.':emptySocial().message};this.emit();await this.connecting?.catch(()=>{});if(revoke&&token)await fetch(new URL('/v1/session',this.endpoint),{method:'DELETE',headers:{Authorization:'Bearer '+token},redirect:'error',signal:AbortSignal.timeout(5000)}).catch(()=>{});}
 }
